@@ -1,5 +1,6 @@
 parameters:
     app.manual_cache_directory: '%kernel.cache_dir%/php-manual'
+    app.user_database: '%kernel.project_dir%/data/users.sqlite'
 
 services:
     _defaults:
@@ -16,3 +17,7 @@ services:
     App\Service\FunctionCatalog:
         arguments:
             $catalogFile: '%kernel.project_dir%/config/catalog.php'
+
+    App\Service\UserStore:
+        arguments:
+            $databaseFile: '%app.user_database%'

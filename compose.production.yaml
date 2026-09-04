@@ -5,6 +5,8 @@ services:
     restart: unless-stopped
     env_file:
       - .env.production
+    volumes:
+      - php-recall-data:/app/data
     networks:
       - scheduler_backend
     mem_limit: 192m
@@ -12,3 +14,6 @@ services:
 networks:
   scheduler_backend:
     external: true
+
+volumes:
+  php-recall-data:

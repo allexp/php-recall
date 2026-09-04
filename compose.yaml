@@ -4,8 +4,8 @@ services:
     ports:
       - "8081:8080"
     volumes:
-      - symfony-cache:/app/var
+      - user-data:/app/data
     restart: unless-stopped
 
 volumes:
-  symfony-cache:
+  user-data:

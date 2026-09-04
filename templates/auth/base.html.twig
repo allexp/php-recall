@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}{% endblock %} — PHP Recall</title>
+    <link rel="stylesheet" href="{{ asset('app.css') }}">
+</head>
+<body>
+    <main class="auth-stage">
+        <section class="auth-card">
+            <a class="brand auth-brand" href="{{ path('app_home') }}"><span class="brand-mark">&lt;?php</span> Recall</a>
+            {% block content %}{% endblock %}
+        </section>
+    </main>
+</body>
+</html>

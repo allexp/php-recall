@@ -1,0 +1,15 @@
+{% extends 'auth/base.html.twig' %}
+{% block title %}Регистрация{% endblock %}
+{% block content %}
+    <h1 class="auth-title">Создать аккаунт</h1>
+    <p class="auth-subtitle">Зарегистрируйтесь, чтобы пользоваться тренажёром под своим именем.</p>
+    {% if errors %}<div class="form-errors" role="alert">{% for error in errors %}<p>{{ error }}</p>{% endfor %}</div>{% endif %}
+    <form method="post" class="auth-form">
+        <input type="hidden" name="_token" value="{{ csrf_token }}">
+        <label>Email<input type="email" name="email" value="{{ email }}" autocomplete="email" required autofocus></label>
+        <label>Пароль<input type="password" name="password" minlength="8" autocomplete="new-password" required></label>
+        <label>Повторите пароль<input type="password" name="password_confirmation" minlength="8" autocomplete="new-password" required></label>
+        <button class="primary" type="submit">Зарегистрироваться</button>
+    </form>
+    <p class="auth-switch">Уже есть аккаунт? <a href="{{ path('app_login') }}">Войти</a></p>
+{% endblock %}

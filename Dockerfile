@@ -6,15 +6,15 @@ RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoload
 
 FROM php:8.3-cli-alpine
 
-RUN apk add --no-cache ca-certificates libxml2-dev \
-    && docker-php-ext-install dom
+RUN apk add --no-cache ca-certificates libxml2-dev sqlite-dev \
+    && docker-php-ext-install dom pdo_sqlite
 
 WORKDIR /app
 COPY . /app
 COPY --from=dependencies /app/vendor /app/vendor
 
-RUN mkdir -p /app/var/cache /app/var/log \
-    && chown -R www-data:www-data /app/var
+RUN mkdir -p /app/var/cache /app/var/log /app/data \
+    && chown -R www-data:www-data /app/var /app/data
 
 USER www-data
 EXPOSE 8080
