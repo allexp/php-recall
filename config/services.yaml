@@ -1,0 +1,18 @@
+parameters:
+    app.manual_cache_directory: '%kernel.cache_dir%/php-manual'
+
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    App\:
+        resource: '../src/'
+
+    App\Service\ManualService:
+        arguments:
+            $cacheDirectory: '%app.manual_cache_directory%'
+
+    App\Service\FunctionCatalog:
+        arguments:
+            $catalogFile: '%kernel.project_dir%/config/catalog.php'

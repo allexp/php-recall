@@ -1,0 +1,54 @@
+{
+    "type": "project",
+    "license": "proprietary",
+    "require": {
+        "php": ">=8.3",
+        "ext-dom": "*",
+        "symfony/asset": "7.4.*",
+        "symfony/cache": "7.4.*",
+        "symfony/dotenv": "7.4.*",
+        "symfony/flex": "^2.7",
+        "symfony/framework-bundle": "7.4.*",
+        "symfony/http-client": "7.4.*",
+        "symfony/runtime": "7.4.*",
+        "symfony/string": "7.4.*",
+        "symfony/twig-bundle": "7.4.*",
+        "symfony/yaml": "7.4.*",
+        "twig/twig": "^3.0"
+    },
+    "require-dev": {
+        "symfony/browser-kit": "7.4.*",
+        "symfony/css-selector": "7.4.*",
+        "symfony/phpunit-bridge": "7.4.*"
+    },
+    "autoload": {
+        "psr-4": { "App\\": "src/" }
+    },
+    "autoload-dev": {
+        "psr-4": { "App\\Tests\\": "tests/" }
+    },
+    "config": {
+        "platform": {
+            "php": "8.3.0"
+        },
+        "allow-plugins": {
+            "php-http/discovery": true,
+            "symfony/flex": true,
+            "symfony/runtime": true
+        },
+        "sort-packages": true
+    },
+    "scripts": {
+        "auto-scripts": {
+            "cache:clear": "symfony-cmd"
+        },
+        "post-install-cmd": ["@auto-scripts"],
+        "post-update-cmd": ["@auto-scripts"]
+    },
+    "extra": {
+        "symfony": {
+            "allow-contrib": false,
+            "require": "7.4.*"
+        }
+    }
+}

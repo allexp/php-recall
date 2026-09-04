@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Тренажёр для изучения функций PHP">
+    <title>PHP Recall — тренажёр функций</title>
+    <link rel="stylesheet" href="{{ asset('app.css') }}">
+</head>
+<body>
+    <header class="topbar">
+        <a class="brand" href="/" aria-label="PHP Recall — на главную">
+            <span class="brand-mark">&lt;?php</span>
+            <span>Recall</span>
+        </a>
+        <label class="category-picker">
+            <span>Категория</span>
+            <select id="category" aria-label="Категория функций">
+                <option value="all">Все функции</option>
+            </select>
+        </label>
+        <div class="progress" id="progress">Загрузка…</div>
+    </header>
+
+    <main class="stage">
+        <button class="nav-button nav-prev" id="previous" type="button" aria-label="Предыдущая функция" disabled>←</button>
+
+        <div class="content-column">
+            <article class="card" aria-live="polite">
+                <div class="eyebrow" id="category-label">Функция PHP</div>
+                <h1 id="function-name">…</h1>
+                <p class="prompt" id="prompt">Вспомните, что делает эта функция.</p>
+
+                <div class="actions">
+                    <button class="primary" id="reveal" type="button">Показать</button>
+                    <button class="known" id="known" type="button">Знаю</button>
+                </div>
+
+                <div class="loading hidden" id="loading">Загружаю документацию…</div>
+                <div class="error hidden" id="error"></div>
+                <section class="answer hidden" id="answer"></section>
+                <section class="manual hidden" id="manual"></section>
+                <button class="secondary full-button hidden" id="show-full" type="button">Показать полностью</button>
+                <a class="source hidden" id="source" target="_blank" rel="noopener noreferrer">Открыть на php.net ↗</a>
+            </article>
+
+            <aside class="statistics" aria-labelledby="statistics-title">
+                <div>
+                    <div class="statistics-title" id="statistics-title">Статистика</div>
+                    <div class="statistics-hint">Сохраняется в этом браузере</div>
+                </div>
+                <dl>
+                    <div>
+                        <dt>Знаю</dt>
+                        <dd id="known-count">0</dd>
+                    </div>
+                    <div>
+                        <dt>Показать</dt>
+                        <dd id="reveal-count">0</dd>
+                    </div>
+                </dl>
+            </aside>
+        </div>
+
+        <button class="nav-button nav-next" id="next" type="button" aria-label="Следующая случайная функция">→</button>
+    </main>
+
+    <footer>Сначала попробуйте ответить сами — узнавание запоминается хуже, чем припоминание.</footer>
+    <script src="{{ asset('app.js') }}" defer></script>
+</body>
+</html>

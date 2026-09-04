@@ -1,0 +1,18 @@
+framework:
+    secret: '%env(APP_SECRET)%'
+    router:
+        utf8: true
+    http_method_override: false
+    handle_all_throwables: true
+    php_errors:
+        log: true
+    http_client:
+        default_options:
+            timeout: 30
+    cache:
+        app: cache.adapter.filesystem
+        system: cache.adapter.system
+
+when@test:
+    framework:
+        test: true
