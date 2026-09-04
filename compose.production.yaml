@@ -1,0 +1,14 @@
+services:
+  app:
+    build: .
+    container_name: php-recall
+    restart: unless-stopped
+    env_file:
+      - .env.production
+    networks:
+      - scheduler_backend
+    mem_limit: 192m
+
+networks:
+  scheduler_backend:
+    external: true

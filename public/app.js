@@ -52,7 +52,7 @@ function incrementCounter(name) {
 }
 
 async function initialise() {
-    const response = await fetch('/api/catalog');
+    const response = await fetch('api/catalog');
     catalog = await response.json();
     updateStatistics();
     Object.entries(catalog).forEach(([key, category]) => {
@@ -110,7 +110,7 @@ async function loadDocumentation() {
     const name = history[historyIndex];
     // Не запрашиваем повторно уже открытую документацию в пределах текущей страницы.
     if (documentation.has(name)) return documentation.get(name);
-    const response = await fetch(`/api/manual/${encodeURIComponent(name)}`);
+    const response = await fetch(`api/manual/${encodeURIComponent(name)}`);
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Не удалось загрузить документацию.');
     documentation.set(name, data);
