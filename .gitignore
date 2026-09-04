@@ -8,6 +8,7 @@
 /vendor/
 /var/
 /public/bundles/
+/config/reference.php
 
 # Закрытый ключ Symfony Secrets
 /config/secrets/prod/prod.decrypt.private.php

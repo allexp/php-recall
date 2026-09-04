@@ -15,12 +15,16 @@ const elements = {
     progress: document.querySelector('#progress'),
     knownCount: document.querySelector('#known-count'),
     revealCount: document.querySelector('#reveal-count'),
+    categoryStatistics: document.querySelector('#category-statistics'),
+    categoryStatisticsList: document.querySelector('#category-statistics-list'),
 };
 
 let catalog = {};
 let history = [];
 let historyIndex = -1;
 const documentation = new Map();
+const isAuthenticated = document.body.dataset.authenticated === '1';
+const knownFunctions = new Set();
 
 // Счётчики сохраняются на год и относятся только к текущему браузеру.
 const counters = {
@@ -51,6 +55,49 @@ function incrementCounter(name) {
     updateStatistics();
 }
 
+function renderCategoryStatistics() {
+    if (!elements.categoryStatistics || !elements.categoryStatisticsList) return;
+    elements.categoryStatisticsList.replaceChildren();
+
+    Object.values(catalog).forEach((category) => {
+        const knownCount = category.functions.filter((name) => knownFunctions.has(name)).length;
+        if (knownCount === 0) return;
+
+        const row = document.createElement('div');
+        const title = document.createElement('dt');
+        const count = document.createElement('dd');
+        title.textContent = category.title;
+        count.textContent = `${knownCount} из ${category.functions.length}`;
+        row.append(title, count);
+        elements.categoryStatisticsList.append(row);
+    });
+
+    elements.categoryStatistics.classList.toggle('hidden', elements.categoryStatisticsList.children.length === 0);
+}
+
+async function loadKnowledge() {
+    if (!isAuthenticated) return;
+    const response = await fetch('api/knowledge');
+    if (!response.ok) throw new Error('Не удалось загрузить прогресс пользователя.');
+    const data = await response.json();
+    knownFunctions.clear();
+    data.functions.forEach((name) => knownFunctions.add(name));
+    renderCategoryStatistics();
+}
+
+async function setKnowledge(functionName, isKnown) {
+    if (!isAuthenticated) return;
+    const response = await fetch(`api/knowledge/${encodeURIComponent(functionName)}`, {
+        method: isKnown ? 'PUT' : 'DELETE',
+        headers: { 'X-CSRF-Token': document.body.dataset.knowledgeToken },
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Не удалось сохранить прогресс.');
+    knownFunctions.clear();
+    data.functions.forEach((name) => knownFunctions.add(name));
+    renderCategoryStatistics();
+}
+
 async function initialise() {
     const response = await fetch('api/catalog');
     catalog = await response.json();
@@ -58,6 +105,7 @@ async function initialise() {
     Object.entries(catalog).forEach(([key, category]) => {
         elements.category.add(new Option(`${category.title} · ${category.functions.length}`, key));
     });
+    await loadKnowledge();
     showRandomFunction();
 }
 
@@ -122,6 +170,13 @@ async function reveal() {
     elements.reveal.classList.add('hidden');
     elements.loading.classList.remove('hidden');
     elements.error.classList.add('hidden');
+    const name = history[historyIndex];
+    try {
+        await setKnowledge(name, false);
+    } catch (error) {
+        elements.error.textContent = error.message;
+        elements.error.classList.remove('hidden');
+    }
     try {
         const data = await loadDocumentation();
         elements.answer.innerHTML = data.summary;
@@ -148,8 +203,15 @@ async function showFull() {
 }
 
 elements.next.addEventListener('click', showRandomFunction);
-elements.known.addEventListener('click', () => {
+elements.known.addEventListener('click', async () => {
     incrementCounter(counters.known);
+    const name = history[historyIndex];
+    try {
+        await setKnowledge(name, true);
+    } catch (error) {
+        elements.error.textContent = error.message;
+        elements.error.classList.remove('hidden');
+    }
     showRandomFunction();
 });
 elements.previous.addEventListener('click', () => {

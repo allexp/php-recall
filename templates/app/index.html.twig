@@ -7,7 +7,7 @@
     <title>PHP Recall — тренажёр функций</title>
     <link rel="stylesheet" href="app.css">
 </head>
-<body>
+<body data-authenticated="{{ app.session.get('user') ? '1' : '0' }}" data-knowledge-token="{{ knowledge_token }}">
     <header class="topbar">
         <a class="brand" href="./" aria-label="PHP Recall — на главную">
             <span class="brand-mark">&lt;?php</span>
@@ -72,6 +72,16 @@
                     </div>
                 </dl>
             </aside>
+
+            {% if app.session.get('user') %}
+                <aside class="category-statistics hidden" id="category-statistics" aria-labelledby="category-statistics-title">
+                    <div>
+                        <div class="statistics-title" id="category-statistics-title">Статистика по категориям</div>
+                        <div class="statistics-hint">Функции, которые вы отметили как известные</div>
+                    </div>
+                    <dl id="category-statistics-list"></dl>
+                </aside>
+            {% endif %}
         </div>
 
         <button class="nav-button nav-next" id="next" type="button" aria-label="Следующая случайная функция">→</button>

@@ -6,6 +6,7 @@
         "ext-dom": "*",
         "symfony/asset": "7.4.*",
         "symfony/cache": "7.4.*",
+        "symfony/console": "7.4.*",
         "symfony/dotenv": "7.4.*",
         "symfony/flex": "^2.7",
         "symfony/framework-bundle": "7.4.*",
