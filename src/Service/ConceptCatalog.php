@@ -26,6 +26,9 @@ final class ConceptCatalog
             $this->materials->replaceCodeExamples($materialId, $item['examples'] ?? []);
             $this->materials->replaceSections($materialId, $item['sections'] ?? []);
         }
+
+        // Удаляем прежнюю объединённую карточку после разделения принципов ООП.
+        $this->materials->deleteMaterial('concept', 'oop-principles');
     }
 
     /** Возвращает сгруппированный список концепций. */

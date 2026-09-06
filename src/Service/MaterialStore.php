@@ -350,6 +350,17 @@ final class MaterialStore
         return $material;
     }
 
+    /** Удаляет материал указанного типа, если он существует. */
+    public function deleteMaterial(string $typeCode, string $slug): void
+    {
+        $statement = $this->connection()->prepare(
+            'DELETE FROM materials
+             WHERE type_id = (SELECT id FROM material_types WHERE code = :type_code)
+               AND slug = :slug'
+        );
+        $statement->execute(['type_code' => $typeCode, 'slug' => $slug]);
+    }
+
     /** Возвращает документацию функции или null, если она ещё не загружена. */
     public function functionDocumentation(string $function): ?array
     {
