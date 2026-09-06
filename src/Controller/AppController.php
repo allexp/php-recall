@@ -7,6 +7,7 @@ namespace App\Controller;
 use App\Service\CsrfTokens;
 use App\Service\FunctionCatalog;
 use App\Service\ManualService;
+use App\Service\MaterialStore;
 use App\Service\UserStore;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -40,14 +41,51 @@ final class AppController extends AbstractController
      * @param string $function Имя функции без круглых скобок
      */
     #[Route('/api/manual/{function}', name: 'api_manual', requirements: ['function' => '[a-z0-9_]+'], methods: ['GET'])]
-    public function manual(string $function, FunctionCatalog $catalog, ManualService $manual): JsonResponse
+    public function manual(
+        string $function,
+        FunctionCatalog $catalog,
+        MaterialStore $materials,
+        ManualService $manual,
+    ): JsonResponse
     {
         if (!$catalog->contains($function)) {
             return $this->json(['error' => 'Функция не найдена в каталоге.'], Response::HTTP_NOT_FOUND);
         }
 
         try {
-            return $this->json($manual->get($function));
+            $documentation = $materials->functionDocumentation($function);
+            if ($documentation === null) {
+                $loaded = $manual->fetch($function);
+                $materials->saveFunctionDocumentation(
+                    $function,
+                    $loaded['definition'],
+                    $loaded['short_description'],
+                    $loaded['full_description'],
+                    $loaded['source_url'],
+                );
+                $documentation = $materials->functionDocumentation($function);
+            }
+
+            if ($documentation === null) {
+                throw new \RuntimeException('Не удалось сохранить документацию функции.');
+            }
+
+            $summary = '<p>'.htmlspecialchars(
+                (string) $documentation['short_description'],
+                ENT_QUOTES | ENT_SUBSTITUTE,
+                'UTF-8',
+            ).'</p>';
+            $summary .= '<pre><code>'.htmlspecialchars(
+                (string) $documentation['definition'],
+                ENT_QUOTES | ENT_SUBSTITUTE,
+                'UTF-8',
+            ).'</code></pre>';
+
+            return $this->json([
+                'summary' => $summary,
+                'full' => $documentation['full_description'],
+                'source' => $documentation['source_url'],
+            ]);
         } catch (\Throwable $exception) {
             return $this->json(['error' => $exception->getMessage()], Response::HTTP_BAD_GATEWAY);
         }

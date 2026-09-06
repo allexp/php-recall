@@ -1,5 +1,5 @@
 parameters:
-    app.manual_cache_directory: '%kernel.cache_dir%/php-manual'
+    app.material_database: '%kernel.project_dir%/data/materials.sqlite'
     app.user_database: '%kernel.project_dir%/data/users.sqlite'
 
 services:
@@ -10,13 +10,13 @@ services:
     App\:
         resource: '../src/'
 
-    App\Service\ManualService:
-        arguments:
-            $cacheDirectory: '%app.manual_cache_directory%'
-
     App\Service\FunctionCatalog:
         arguments:
             $catalogFile: '%kernel.project_dir%/config/catalog.php'
+
+    App\Service\MaterialStore:
+        arguments:
+            $databaseFile: '%app.material_database%'
 
     App\Service\UserStore:
         arguments:

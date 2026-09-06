@@ -1,0 +1,86 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Tests\Service;
+
+use App\Service\MaterialStore;
+use PHPUnit\Framework\TestCase;
+
+/** Проверяет единое хранилище учебных материалов. */
+final class MaterialStoreTest extends TestCase
+{
+    private string $databaseFile;
+
+    protected function setUp(): void
+    {
+        $this->databaseFile = sys_get_temp_dir().'/php-recall-materials-'.bin2hex(random_bytes(8)).'.sqlite';
+    }
+
+    protected function tearDown(): void
+    {
+        if (is_file($this->databaseFile)) {
+            unlink($this->databaseFile);
+        }
+    }
+
+    public function testSynchronisesFunctionCatalogWithoutDuplicates(): void
+    {
+        $store = new MaterialStore($this->databaseFile);
+        $catalog = [
+            'arrays' => ['title' => 'Массивы', 'functions' => ['array_map', 'array_filter']],
+        ];
+
+        $store->synchroniseFunctionCatalog($catalog);
+        $store->synchroniseFunctionCatalog($catalog);
+
+        self::assertSame($catalog, $store->functionCatalog());
+        self::assertTrue($store->containsFunction('array_map'));
+        self::assertFalse($store->containsFunction('strlen'));
+    }
+
+    public function testStoresFunctionDocumentationInSeparateFields(): void
+    {
+        $store = new MaterialStore($this->databaseFile);
+        $store->synchroniseFunctionCatalog([
+            'arrays' => ['title' => 'Массивы', 'functions' => ['array_map']],
+        ]);
+
+        $store->saveFunctionDocumentation(
+            'array_map',
+            'array_map(?callable $callback, array $array, array ...$arrays): array',
+            'Применяет callback к элементам массивов.',
+            '<section><p>Полное описание.</p></section>',
+            'https://www.php.net/manual/ru/function.array-map.php',
+        );
+
+        $documentation = $store->functionDocumentation('array_map');
+        self::assertNotNull($documentation);
+        self::assertSame('Применяет callback к элементам массивов.', $documentation['short_description']);
+        self::assertStringContainsString('array_map', $documentation['definition']);
+        self::assertSame('<section><p>Полное описание.</p></section>', $documentation['full_description']);
+    }
+
+    public function testStoresConceptWithOrderedCodeExamples(): void
+    {
+        $store = new MaterialStore($this->databaseFile);
+        $materialId = $store->saveMaterial('concept', 'Концепции разработки', 'principles', 'Принципы', [
+            'title' => 'SOLID',
+            'slug' => 'solid',
+            'definition' => 'Пять принципов объектно-ориентированного проектирования.',
+            'short_description' => 'Помогает создавать поддерживаемый код.',
+            'full_description' => '# SOLID',
+            'content_format' => 'markdown',
+        ]);
+        $store->replaceCodeExamples($materialId, [
+            ['title' => 'До', 'language' => 'php', 'code' => '<?php echo "до";'],
+            ['title' => 'После', 'language' => 'php', 'code' => '<?php echo "после";'],
+        ]);
+
+        $material = $store->material('concept', 'solid');
+        self::assertNotNull($material);
+        self::assertSame('SOLID', $material['title']);
+        self::assertSame('markdown', $material['content_format']);
+        self::assertSame(['До', 'После'], array_column($material['code_examples'], 'title'));
+    }
+}

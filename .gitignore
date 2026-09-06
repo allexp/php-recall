@@ -18,6 +18,9 @@
 /.phpunit.result.cache
 /phpunit.xml
 
+# Локальные базы данных приложения
+/data/*.sqlite
+
 # Настройки IDE
 /.idea/
 

@@ -7,13 +7,14 @@ namespace App\Service;
 /** Предоставляет типизированный доступ к настроенному каталогу функций. */
 final class FunctionCatalog
 {
-    /** @var array<string, array{title: string, functions: list<string>}> */
-    private readonly array $categories;
-
-    /** Загружает каталог из PHP-файла конфигурации. */
-    public function __construct(string $catalogFile)
-    {
-        $this->categories = require $catalogFile;
+    /** Синхронизирует конфигурацию каталога с базой материалов. */
+    public function __construct(
+        private readonly MaterialStore $materials,
+        string $catalogFile,
+    ) {
+        /** @var array<string, array{title: string, functions: list<string>}> $catalog */
+        $catalog = require $catalogFile;
+        $this->materials->synchroniseFunctionCatalog($catalog);
     }
 
     /**
@@ -23,18 +24,12 @@ final class FunctionCatalog
      */
     public function all(): array
     {
-        return $this->categories;
+        return $this->materials->functionCatalog();
     }
 
     /** Проверяет, разрешено ли запрашивать функцию через API. */
     public function contains(string $function): bool
     {
-        foreach ($this->categories as $category) {
-            if (in_array($function, $category['functions'], true)) {
-                return true;
-            }
-        }
-
-        return false;
+        return $this->materials->containsFunction($function);
     }
 }

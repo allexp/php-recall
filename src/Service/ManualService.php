@@ -10,35 +10,16 @@ use DOMXPath;
 use RuntimeException;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
-/** Загружает, разбирает и кэширует страницы официального PHP Manual. */
+/** Загружает и разбирает страницы официального PHP Manual. */
 final class ManualService
 {
-    /**
-     * @param string $cacheDirectory Каталог для локального кэша разобранных страниц
-     */
-    public function __construct(
-        private readonly HttpClientInterface $httpClient,
-        private readonly string $cacheDirectory,
-    ) {
+    public function __construct(private readonly HttpClientInterface $httpClient)
+    {
     }
 
-    /**
-     * Возвращает подготовленную документацию функции, используя кэш при наличии.
-     *
-     * @param string $function Имя функции без круглых скобок
-     *
-     * @return array{summary: string, full: string, source: string}
-     */
-    public function get(string $function): array
+    /** Загружает актуальную документацию функции из PHP Manual. */
+    public function fetch(string $function): array
     {
-        $cacheFile = $this->cacheDirectory . '/' . $function . '.json';
-        if (is_file($cacheFile)) {
-            $cached = json_decode((string) file_get_contents($cacheFile), true);
-            if (is_array($cached) && isset($cached['summary'], $cached['full'], $cached['source'])) {
-                return $cached;
-            }
-        }
-
         // В адресах PHP Manual символы подчёркивания в именах функций заменяются дефисами.
         $source = 'https://www.php.net/manual/ru/function.' . str_replace('_', '-', $function) . '.php';
         $response = $this->httpClient->request('GET', $source);
@@ -46,19 +27,13 @@ final class ManualService
             throw new RuntimeException('PHP Manual вернул ошибку при загрузке страницы.');
         }
 
-        $result = $this->parse($response->getContent(), $source);
-        if (!is_dir($this->cacheDirectory) && !mkdir($this->cacheDirectory, 0775, true) && !is_dir($this->cacheDirectory)) {
-            throw new RuntimeException('Не удалось создать каталог кэша.');
-        }
-        file_put_contents($cacheFile, json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), LOCK_EX);
-
-        return $result;
+        return $this->parse($response->getContent(), $source);
     }
 
     /**
      * Извлекает назначение, сигнатуру и разделы описания из HTML-страницы.
      *
-     * @return array{summary: string, full: string, source: string}
+     * @return array{definition: string, short_description: string, full_description: string, source_url: string}
      */
     private function parse(string $html, string $source): array
     {
@@ -72,9 +47,6 @@ final class ManualService
         $purpose = trim((string) $xpath->evaluate('string(//*[contains(concat(" ", normalize-space(@class), " "), " refpurpose ")][1])'));
         $synopsisNode = $xpath->query('//*[contains(concat(" ", normalize-space(@class), " "), " methodsynopsis ")][1]')->item(0);
         $synopsis = preg_replace('/\s+/u', ' ', trim($synopsisNode?->textContent ?? '')) ?? '';
-        $summary = '<p>' . htmlspecialchars($purpose, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</p>';
-        $summary .= '<pre><code>' . htmlspecialchars($synopsis, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</code></pre>';
-
         $full = '';
         foreach ($xpath->query('//*[contains(concat(" ", normalize-space(@class), " "), " refsect1 ")]') as $section) {
             if ($section instanceof DOMElement) {
@@ -85,7 +57,12 @@ final class ManualService
             throw new RuntimeException('Формат страницы PHP Manual не удалось распознать.');
         }
 
-        return ['summary' => $summary, 'full' => $this->sanitize($full), 'source' => $source];
+        return [
+            'definition' => $synopsis,
+            'short_description' => $purpose,
+            'full_description' => $this->sanitize($full),
+            'source_url' => $source,
+        ];
     }
 
     /**
