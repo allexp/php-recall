@@ -74,6 +74,40 @@ final class UserStore
         $statement->execute(['user_id' => $userId, 'function_name' => $function]);
     }
 
+    /** Возвращает список концепций, которые пользователь отметил как известные. */
+    public function knownConcepts(int $userId): array
+    {
+        $statement = $this->connection()->prepare(
+            'SELECT concept_slug FROM known_concepts WHERE user_id = :user_id ORDER BY concept_slug'
+        );
+        $statement->execute(['user_id' => $userId]);
+
+        return $statement->fetchAll(PDO::FETCH_COLUMN);
+    }
+
+    /** Добавляет или удаляет концепцию из списка известных пользователю. */
+    public function setConceptKnown(int $userId, string $slug, bool $known): void
+    {
+        if ($known) {
+            $statement = $this->connection()->prepare(
+                'INSERT OR IGNORE INTO known_concepts (user_id, concept_slug, created_at)
+                 VALUES (:user_id, :concept_slug, :created_at)'
+            );
+            $statement->execute([
+                'user_id' => $userId,
+                'concept_slug' => $slug,
+                'created_at' => (new \DateTimeImmutable())->format(DATE_ATOM),
+            ]);
+
+            return;
+        }
+
+        $statement = $this->connection()->prepare(
+            'DELETE FROM known_concepts WHERE user_id = :user_id AND concept_slug = :concept_slug'
+        );
+        $statement->execute(['user_id' => $userId, 'concept_slug' => $slug]);
+    }
+
     private function normaliseEmail(string $email): string
     {
         return mb_strtolower(trim($email));
@@ -109,6 +143,15 @@ final class UserStore
                 function_name TEXT NOT NULL,
                 created_at TEXT NOT NULL,
                 PRIMARY KEY (user_id, function_name),
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            )'
+        );
+        $this->connection->exec(
+            'CREATE TABLE IF NOT EXISTS known_concepts (
+                user_id INTEGER NOT NULL,
+                concept_slug TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                PRIMARY KEY (user_id, concept_slug),
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
             )'
         );

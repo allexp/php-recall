@@ -128,7 +128,10 @@ final class AppController extends AbstractController
             return $this->json(['error' => 'Необходима авторизация.'], Response::HTTP_UNAUTHORIZED);
         }
 
-        return $this->json(['functions' => $users->knownFunctions((int) $user['id'])]);
+        return $this->json([
+            'functions' => $users->knownFunctions((int) $user['id']),
+            'concepts' => $users->knownConcepts((int) $user['id']),
+        ]);
     }
 
     /** Изменяет отметку «знаю» для функции. */
@@ -154,5 +157,30 @@ final class AppController extends AbstractController
         $users->setFunctionKnown((int) $user['id'], $function, $request->isMethod('PUT'));
 
         return $this->json(['functions' => $users->knownFunctions((int) $user['id'])]);
+    }
+
+    /** Изменяет отметку «знаю» для концепции. */
+    #[Route('/api/knowledge/concept/{slug}', name: 'api_concept_knowledge_update', requirements: ['slug' => '[a-z0-9-]+'], methods: ['PUT', 'DELETE'])]
+    public function updateConceptKnowledge(
+        string $slug,
+        Request $request,
+        ConceptCatalog $catalog,
+        UserStore $users,
+        CsrfTokens $csrf,
+    ): JsonResponse {
+        $user = $request->getSession()->get('user');
+        if (!is_array($user) || !isset($user['id'])) {
+            return $this->json(['error' => 'Необходима авторизация.'], Response::HTTP_UNAUTHORIZED);
+        }
+        if (!$csrf->isValid($request, 'knowledge', (string) $request->headers->get('X-CSRF-Token'))) {
+            return $this->json(['error' => 'Сессия устарела. Обновите страницу.'], Response::HTTP_FORBIDDEN);
+        }
+        if ($catalog->get($slug) === null) {
+            return $this->json(['error' => 'Концепция не найдена.'], Response::HTTP_NOT_FOUND);
+        }
+
+        $users->setConceptKnown((int) $user['id'], $slug, $request->isMethod('PUT'));
+
+        return $this->json(['concepts' => $users->knownConcepts((int) $user['id'])]);
     }
 }
