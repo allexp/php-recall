@@ -83,4 +83,32 @@ final class MaterialStoreTest extends TestCase
         self::assertSame('markdown', $material['content_format']);
         self::assertSame(['До', 'После'], array_column($material['code_examples'], 'title'));
     }
+
+    public function testStoresIndependentlyExpandableConceptSections(): void
+    {
+        $store = new MaterialStore($this->databaseFile);
+        $materialId = $store->saveMaterial('concept', 'Концепции разработки', 'principles', 'Принципы', [
+            'title' => 'SOLID',
+            'slug' => 'solid',
+            'definition' => 'Пять принципов.',
+            'short_description' => 'Краткое описание.',
+            'full_description' => '<p>Полное объяснение.</p>',
+        ]);
+        $store->replaceSections($materialId, [
+            [
+                'title' => 'S — Single Responsibility',
+                'slug' => 'srp',
+                'description' => '<p>Одна причина для изменения.</p>',
+                'examples' => [['title' => 'Пример', 'language' => 'php', 'code' => 'final class Service {}']],
+            ],
+            ['title' => 'O — Open/Closed', 'slug' => 'ocp', 'description' => '<p>Открыт для расширения.</p>'],
+        ]);
+
+        $material = $store->material('concept', 'solid');
+
+        self::assertNotNull($material);
+        self::assertSame(['srp', 'ocp'], array_column($material['sections'], 'slug'));
+        self::assertSame('Пример', $material['sections'][0]['code_examples'][0]['title']);
+        self::assertSame([], $material['sections'][1]['code_examples']);
+    }
 }

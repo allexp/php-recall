@@ -1,7 +1,12 @@
 const elements = {
+    functionsMode: document.querySelector('#functions-mode'),
+    conceptsMode: document.querySelector('#concepts-mode'),
+    studyCard: document.querySelector('#study-card'),
+    conceptList: document.querySelector('#concept-list'),
     category: document.querySelector('#category'),
     categoryLabel: document.querySelector('#category-label'),
     functionName: document.querySelector('#function-name'),
+    prompt: document.querySelector('#prompt'),
     previous: document.querySelector('#previous'),
     next: document.querySelector('#next'),
     reveal: document.querySelector('#reveal'),
@@ -20,6 +25,8 @@ const elements = {
 };
 
 let catalog = {};
+let conceptCatalog = {};
+let mode = 'functions';
 let history = [];
 let historyIndex = -1;
 const documentation = new Map();
@@ -99,14 +106,120 @@ async function setKnowledge(functionName, isKnown) {
 }
 
 async function initialise() {
-    const response = await fetch('api/catalog');
-    catalog = await response.json();
+    const [functionsResponse, conceptsResponse] = await Promise.all([fetch('api/catalog'), fetch('api/concepts')]);
+    if (!functionsResponse.ok || !conceptsResponse.ok) throw new Error('Не удалось загрузить каталоги.');
+    catalog = await functionsResponse.json();
+    conceptCatalog = await conceptsResponse.json();
     updateStatistics();
     Object.entries(catalog).forEach(([key, category]) => {
         elements.category.add(new Option(`${category.title} · ${category.functions.length}`, key));
     });
     await loadKnowledge();
+    renderConceptList();
     showRandomFunction();
+}
+
+function appendExamples(container, examples) {
+    examples.forEach((example) => {
+        const title = document.createElement('div');
+        title.className = 'example-title';
+        title.textContent = example.title || `Пример на ${example.language}`;
+        const pre = document.createElement('pre');
+        const code = document.createElement('code');
+        code.textContent = example.code;
+        pre.append(code);
+        container.append(title, pre);
+    });
+}
+
+function renderConceptList() {
+    elements.conceptList.replaceChildren();
+    Object.values(conceptCatalog).forEach((category) => {
+        const heading = document.createElement('h2');
+        heading.className = 'concept-group-title';
+        heading.textContent = category.title;
+        elements.conceptList.append(heading);
+        category.materials.forEach((material) => {
+            const card = document.createElement('button');
+            card.className = 'concept-card';
+            card.type = 'button';
+            const title = document.createElement('strong');
+            const description = document.createElement('span');
+            title.textContent = material.title;
+            description.textContent = material.short_description;
+            card.append(title, description);
+            card.addEventListener('click', () => openConcept(material.slug));
+            elements.conceptList.append(card);
+        });
+    });
+}
+
+async function openConcept(slug) {
+    elements.conceptList.classList.add('hidden');
+    elements.studyCard.classList.remove('hidden');
+    elements.loading.classList.remove('hidden');
+    elements.error.classList.add('hidden');
+    try {
+        const response = await fetch(`api/concepts/${encodeURIComponent(slug)}`);
+        const concept = await response.json();
+        if (!response.ok) throw new Error(concept.error || 'Не удалось загрузить концепцию.');
+        elements.categoryLabel.textContent = 'Концепция разработки';
+        elements.functionName.textContent = concept.title;
+        elements.prompt.textContent = concept.definition;
+        elements.answer.replaceChildren();
+        const shortDescription = document.createElement('p');
+        shortDescription.textContent = concept.short_description;
+        elements.answer.append(shortDescription);
+        elements.answer.insertAdjacentHTML('beforeend', concept.full_description);
+        elements.answer.classList.remove('hidden');
+        elements.manual.replaceChildren();
+        appendExamples(elements.manual, concept.code_examples);
+        const sections = document.createElement('div');
+        sections.className = 'concept-sections';
+        concept.sections.forEach((section) => {
+            const details = document.createElement('details');
+            details.className = 'concept-section';
+            const summary = document.createElement('summary');
+            const body = document.createElement('div');
+            summary.textContent = section.title;
+            body.className = 'concept-section-body';
+            body.innerHTML = section.description;
+            appendExamples(body, section.code_examples);
+            details.append(summary, body);
+            sections.append(details);
+        });
+        elements.manual.append(sections);
+        elements.manual.classList.remove('hidden');
+        elements.source.classList.toggle('hidden', !concept.source_url);
+        if (concept.source_url) {
+            elements.source.href = concept.source_url;
+            elements.source.textContent = 'Открыть источник ↗';
+        }
+    } catch (error) {
+        elements.error.textContent = error.message;
+        elements.error.classList.remove('hidden');
+    } finally {
+        elements.loading.classList.add('hidden');
+    }
+}
+
+function setMode(nextMode) {
+    mode = nextMode;
+    const concepts = mode === 'concepts';
+    elements.functionsMode.classList.toggle('active', !concepts);
+    elements.conceptsMode.classList.toggle('active', concepts);
+    elements.category.closest('label').classList.toggle('hidden', concepts);
+    elements.previous.classList.toggle('hidden', concepts);
+    elements.next.classList.toggle('hidden', concepts);
+    elements.studyCard.classList.toggle('hidden', concepts);
+    elements.conceptList.classList.toggle('hidden', !concepts);
+    elements.reveal.classList.toggle('hidden', concepts);
+    elements.known.classList.toggle('hidden', concepts);
+    elements.showFull.classList.add('hidden');
+    elements.progress.textContent = concepts
+        ? `${Object.values(conceptCatalog).reduce((total, category) => total + category.materials.length, 0)} концепций`
+        : `${currentPool().length} функций в подборке`;
+    if (!concepts) renderFunction();
 }
 
 function currentPool() {
@@ -140,6 +253,7 @@ function renderFunction() {
     const name = history[historyIndex];
     elements.functionName.textContent = `${name}()`;
     elements.categoryLabel.textContent = categoryTitle(name);
+    elements.prompt.textContent = 'Вспомните, что делает эта функция.';
     elements.previous.disabled = historyIndex <= 0;
     elements.next.disabled = false;
     elements.progress.textContent = `${currentPool().length} функций в подборке`;
@@ -150,6 +264,7 @@ function renderFunction() {
     elements.answer.classList.add('hidden');
     elements.manual.classList.add('hidden');
     elements.source.classList.add('hidden');
+    elements.source.textContent = 'Открыть на php.net ↗';
     elements.answer.innerHTML = '';
     elements.manual.innerHTML = '';
 }
@@ -227,7 +342,10 @@ elements.category.addEventListener('change', () => {
     historyIndex = -1;
     showRandomFunction();
 });
+elements.functionsMode.addEventListener('click', () => setMode('functions'));
+elements.conceptsMode.addEventListener('click', () => setMode('concepts'));
 document.addEventListener('keydown', (event) => {
+    if (mode !== 'functions') return;
     if (event.key === 'ArrowRight') showRandomFunction();
     if (event.key === 'ArrowLeft' && historyIndex > 0) {
         historyIndex -= 1;

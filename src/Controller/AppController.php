@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Service\CsrfTokens;
+use App\Service\ConceptCatalog;
 use App\Service\FunctionCatalog;
 use App\Service\ManualService;
 use App\Service\MaterialStore;
@@ -33,6 +34,33 @@ final class AppController extends AbstractController
     public function catalog(FunctionCatalog $catalog): JsonResponse
     {
         return $this->json($catalog->all());
+    }
+
+    /** Возвращает категории и карточки концепций разработки. */
+    #[Route('/api/concepts', name: 'api_concepts', methods: ['GET'])]
+    public function concepts(ConceptCatalog $catalog): JsonResponse
+    {
+        return $this->json($catalog->all());
+    }
+
+    /** Возвращает полное описание концепции с раскрываемыми подсекциями. */
+    #[Route('/api/concepts/{slug}', name: 'api_concept', requirements: ['slug' => '[a-z0-9-]+'], methods: ['GET'])]
+    public function concept(string $slug, ConceptCatalog $catalog): JsonResponse
+    {
+        $material = $catalog->get($slug);
+        if ($material === null) {
+            return $this->json(['error' => 'Концепция не найдена.'], Response::HTTP_NOT_FOUND);
+        }
+
+        return $this->json([
+            'title' => $material['title'],
+            'definition' => $material['definition'],
+            'short_description' => $material['short_description'],
+            'full_description' => $material['full_description'],
+            'source_url' => $material['source_url'],
+            'code_examples' => $material['code_examples'],
+            'sections' => $material['sections'],
+        ]);
     }
 
     /**

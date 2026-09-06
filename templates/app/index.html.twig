@@ -13,6 +13,10 @@
             <span class="brand-mark">&lt;?php</span>
             <span>Recall</span>
         </a>
+        <nav class="content-switch" aria-label="Раздел обучения">
+            <button class="switch-button active" id="functions-mode" type="button">PHP-функции</button>
+            <button class="switch-button" id="concepts-mode" type="button">Концепции</button>
+        </nav>
         <label class="category-picker">
             <span>Категория</span>
             <select id="category" aria-label="Категория функций">
@@ -38,7 +42,7 @@
         <button class="nav-button nav-prev" id="previous" type="button" aria-label="Предыдущая функция" disabled>←</button>
 
         <div class="content-column">
-            <article class="card" aria-live="polite">
+            <article class="card" id="study-card" aria-live="polite">
                 <div class="eyebrow" id="category-label">Функция PHP</div>
                 <h1 id="function-name">…</h1>
                 <p class="prompt" id="prompt">Вспомните, что делает эта функция.</p>
@@ -55,6 +59,8 @@
                 <button class="secondary full-button hidden" id="show-full" type="button">Показать полностью</button>
                 <a class="source hidden" id="source" target="_blank" rel="noopener noreferrer">Открыть на php.net ↗</a>
             </article>
+
+            <section class="concept-list hidden" id="concept-list" aria-label="Концепции разработки"></section>
 
             <aside class="statistics" aria-labelledby="statistics-title">
                 <div>

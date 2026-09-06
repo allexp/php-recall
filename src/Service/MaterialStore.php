@@ -102,6 +102,33 @@ final class MaterialStore
         return $catalog;
     }
 
+    /** Возвращает каталог концепций, сгруппированный по категориям. */
+    public function conceptCatalog(): array
+    {
+        $rows = $this->connection()->query(
+            "SELECT categories.code, categories.title AS category_title,
+                    materials.title, materials.slug, materials.short_description
+             FROM materials
+             JOIN material_types ON material_types.id = materials.type_id
+             JOIN categories ON categories.id = materials.category_id
+             WHERE material_types.code = 'concept'
+             ORDER BY categories.position, categories.id, materials.position, materials.id"
+        )->fetchAll();
+
+        $catalog = [];
+        foreach ($rows as $row) {
+            $code = (string) $row['code'];
+            $catalog[$code] ??= ['title' => (string) $row['category_title'], 'materials' => []];
+            $catalog[$code]['materials'][] = [
+                'title' => (string) $row['title'],
+                'slug' => (string) $row['slug'],
+                'short_description' => (string) $row['short_description'],
+            ];
+        }
+
+        return $catalog;
+    }
+
     /** Проверяет наличие функции в каталоге материалов. */
     public function containsFunction(string $function): bool
     {
@@ -138,7 +165,8 @@ final class MaterialStore
      *     short_description: string,
      *     full_description: string,
      *     content_format?: string,
-     *     source_url?: string|null
+     *     source_url?: string|null,
+     *     position?: int
      * } $material
      */
     public function saveMaterial(
@@ -154,10 +182,10 @@ final class MaterialStore
         $statement = $this->connection()->prepare(
             'INSERT INTO materials (
                 type_id, category_id, title, slug, definition, short_description,
-                full_description, content_format, source_url, created_at, updated_at
+                full_description, content_format, source_url, position, created_at, updated_at
             ) VALUES (
                 :type_id, :category_id, :title, :slug, :definition, :short_description,
-                :full_description, :content_format, :source_url, :created_at, :updated_at
+                :full_description, :content_format, :source_url, :position, :created_at, :updated_at
             )
             ON CONFLICT(type_id, slug) DO UPDATE SET
                 category_id = excluded.category_id,
@@ -167,6 +195,7 @@ final class MaterialStore
                 full_description = excluded.full_description,
                 content_format = excluded.content_format,
                 source_url = excluded.source_url,
+                position = excluded.position,
                 updated_at = excluded.updated_at'
         );
         $statement->execute([
@@ -179,6 +208,7 @@ final class MaterialStore
             'full_description' => $material['full_description'],
             'content_format' => $material['content_format'] ?? 'html',
             'source_url' => $material['source_url'] ?? null,
+            'position' => $material['position'] ?? 0,
             'created_at' => $now,
             'updated_at' => $now,
         ]);
@@ -227,6 +257,56 @@ final class MaterialStore
         }
     }
 
+    /**
+     * Заменяет подсекции материала и связанные с ними примеры кода.
+     *
+     * @param list<array{title: string, slug: string, description: string, examples?: list<array{title?: string, language: string, code: string}>}> $sections
+     */
+    public function replaceSections(int $materialId, array $sections): void
+    {
+        $connection = $this->connection();
+        $connection->beginTransaction();
+
+        try {
+            $statement = $connection->prepare('DELETE FROM material_sections WHERE material_id = :material_id');
+            $statement->execute(['material_id' => $materialId]);
+            $sectionStatement = $connection->prepare(
+                'INSERT INTO material_sections (material_id, title, slug, description, position)
+                 VALUES (:material_id, :title, :slug, :description, :position)'
+            );
+            $exampleStatement = $connection->prepare(
+                'INSERT INTO code_examples (material_id, section_id, title, language, code, position)
+                 VALUES (:material_id, :section_id, :title, :language, :code, :position)'
+            );
+            foreach ($sections as $position => $section) {
+                $sectionStatement->execute([
+                    'material_id' => $materialId,
+                    'title' => $section['title'],
+                    'slug' => $section['slug'],
+                    'description' => $section['description'],
+                    'position' => $position,
+                ]);
+                $sectionId = (int) $connection->lastInsertId();
+                foreach ($section['examples'] ?? [] as $examplePosition => $example) {
+                    $exampleStatement->execute([
+                        'material_id' => $materialId,
+                        'section_id' => $sectionId,
+                        'title' => $example['title'] ?? '',
+                        'language' => $example['language'],
+                        'code' => $example['code'],
+                        'position' => $examplePosition,
+                    ]);
+                }
+            }
+            $connection->commit();
+        } catch (\Throwable $exception) {
+            if ($connection->inTransaction()) {
+                $connection->rollBack();
+            }
+            throw $exception;
+        }
+    }
+
     /** Возвращает материал вместе с упорядоченными примерами кода. */
     public function material(string $typeCode, string $slug): ?array
     {
@@ -249,6 +329,23 @@ final class MaterialStore
         );
         $statement->execute(['material_id' => $material['id']]);
         $material['code_examples'] = $statement->fetchAll();
+
+        $statement = $this->connection()->prepare(
+            'SELECT id, title, slug, description, position FROM material_sections
+             WHERE material_id = :material_id ORDER BY position, id'
+        );
+        $statement->execute(['material_id' => $material['id']]);
+        $material['sections'] = $statement->fetchAll();
+        $exampleStatement = $this->connection()->prepare(
+            'SELECT title, language, code, position FROM code_examples
+             WHERE section_id = :section_id ORDER BY position, id'
+        );
+        foreach ($material['sections'] as &$section) {
+            $exampleStatement->execute(['section_id' => $section['id']]);
+            $section['code_examples'] = $exampleStatement->fetchAll();
+            unset($section['id']);
+        }
+        unset($section);
 
         return $material;
     }
@@ -419,6 +516,16 @@ final class MaterialStore
                 position INTEGER NOT NULL DEFAULT 0,
                 FOREIGN KEY (material_id) REFERENCES materials(id) ON DELETE CASCADE
             );
+            CREATE TABLE IF NOT EXISTS material_sections (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                material_id INTEGER NOT NULL,
+                title TEXT NOT NULL,
+                slug TEXT NOT NULL,
+                description TEXT NOT NULL DEFAULT '',
+                position INTEGER NOT NULL DEFAULT 0,
+                UNIQUE (material_id, slug),
+                FOREIGN KEY (material_id) REFERENCES materials(id) ON DELETE CASCADE
+            );
             CREATE INDEX IF NOT EXISTS idx_categories_type ON categories(type_id, position);
             CREATE INDEX IF NOT EXISTS idx_materials_category ON materials(category_id);
             CREATE INDEX IF NOT EXISTS idx_materials_type_title ON materials(type_id, title);
@@ -428,6 +535,16 @@ final class MaterialStore
         if (!in_array('position', $columns, true)) {
             $this->connection?->exec('ALTER TABLE materials ADD COLUMN position INTEGER NOT NULL DEFAULT 0');
         }
+        $exampleColumns = $this->connection?->query('PRAGMA table_info(code_examples)')->fetchAll(PDO::FETCH_COLUMN, 1) ?? [];
+        if (!in_array('section_id', $exampleColumns, true)) {
+            $this->connection?->exec(
+                'ALTER TABLE code_examples ADD COLUMN section_id INTEGER REFERENCES material_sections(id) ON DELETE CASCADE'
+            );
+        }
+        $this->connection?->exec(
+            'CREATE INDEX IF NOT EXISTS idx_material_sections_material ON material_sections(material_id, position);
+             CREATE INDEX IF NOT EXISTS idx_code_examples_section ON code_examples(section_id, position)'
+        );
     }
 
     private function now(): string

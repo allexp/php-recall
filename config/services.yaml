@@ -18,6 +18,10 @@ services:
         arguments:
             $databaseFile: '%app.material_database%'
 
+    App\Service\ConceptCatalog:
+        arguments:
+            $catalogFile: '%kernel.project_dir%/config/concepts.php'
+
     App\Service\UserStore:
         arguments:
             $databaseFile: '%app.user_database%'
