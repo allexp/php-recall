@@ -18,6 +18,10 @@ docker compose up --build -d
 docker compose -f compose.production.yaml up --build -d
 ```
 
+В production приложение доступно по адресу <https://php-recall.aleksppv.ru>. Центральный Nginx
+должен находиться в сети `scheduler_backend` и проксировать запросы на `php-recall:8080`.
+Скрипты из `ops/certbot` используются сервером для автоматического продления TLS-сертификата.
+
 ### Обновление сервера
 
 После первоначального клонирования репозитория и создания `.env.production` обновление выполняется deploy-скриптом:
@@ -27,9 +31,9 @@ chmod +x deploy.sh
 ./deploy.sh
 ```
 
-Скрипт получает изменения из `origin/master`, пересобирает production-образ, перезапускает контейнер и проверяет его состояние. SQLite-база остаётся в Docker volume `php-recall-data`.
+Скрипт получает изменения из `origin/master`, пересобирает production-образ, перезапускает контейнер и проверяет его состояние и публичный адрес <https://php-recall.aleksppv.ru>. SQLite-база остаётся в Docker volume `php-recall-data`.
 
-Для дополнительной проверки публичного адреса передайте URL в переменной окружения:
+Чтобы проверить другой публичный адрес, передайте URL в переменной окружения:
 
 ```bash
 DEPLOY_HEALTH_URL=https://example.com ./deploy.sh

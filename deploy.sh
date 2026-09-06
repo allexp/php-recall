@@ -7,7 +7,7 @@ PROJECT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 COMPOSE_FILE="$PROJECT_DIR/compose.production.yaml"
 REMOTE_NAME=${DEPLOY_REMOTE:-origin}
 BRANCH_NAME=${DEPLOY_BRANCH:-master}
-HEALTH_URL=${DEPLOY_HEALTH_URL:-}
+HEALTH_URL=${DEPLOY_HEALTH_URL:-https://php-recall.aleksppv.ru}
 
 cd "$PROJECT_DIR"
 
@@ -70,15 +70,13 @@ while [ "$ATTEMPT" -le "$MAX_ATTEMPTS" ]; do
     sleep 2
 done
 
-if [ -n "$HEALTH_URL" ]; then
-    if ! command -v curl >/dev/null 2>&1; then
-        echo "Ошибка: для HTTP-проверки DEPLOY_HEALTH_URL требуется curl." >&2
-        exit 1
-    fi
-
-    echo "Проверяю HTTP-ответ $HEALTH_URL..."
-    curl --fail --silent --show-error --retry 5 --retry-delay 2 "$HEALTH_URL" >/dev/null
+if ! command -v curl >/dev/null 2>&1; then
+    echo "Ошибка: для HTTP-проверки DEPLOY_HEALTH_URL требуется curl." >&2
+    exit 1
 fi
+
+echo "Проверяю HTTP-ответ $HEALTH_URL..."
+curl --fail --silent --show-error --retry 5 --retry-delay 2 "$HEALTH_URL" >/dev/null
 
 docker compose -f "$COMPOSE_FILE" ps
 echo "Развёртывание успешно завершено: $(git rev-parse --short HEAD)."
