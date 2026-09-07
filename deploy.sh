@@ -5,6 +5,7 @@ set -eu
 # Скрипт можно запускать из любого каталога: рабочая директория определяется по его расположению.
 PROJECT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 COMPOSE_FILE="$PROJECT_DIR/compose.production.yaml"
+ENV_FILE="$PROJECT_DIR/.env.production"
 REMOTE_NAME=${DEPLOY_REMOTE:-origin}
 BRANCH_NAME=${DEPLOY_BRANCH:-master}
 HEALTH_URL=${DEPLOY_HEALTH_URL:-https://php-recall.aleksppv.ru}
@@ -31,7 +32,7 @@ if [ ! -f "$COMPOSE_FILE" ]; then
     exit 1
 fi
 
-if [ ! -f "$PROJECT_DIR/.env.production" ]; then
+if [ ! -f "$ENV_FILE" ]; then
     echo "Ошибка: не найден файл .env.production." >&2
     exit 1
 fi
@@ -46,23 +47,23 @@ git fetch "$REMOTE_NAME" "$BRANCH_NAME"
 git merge --ff-only "$REMOTE_NAME/$BRANCH_NAME"
 
 echo "Собираю production-образ..."
-docker compose -f "$COMPOSE_FILE" build --pull
+docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" build --pull
 
 echo "Запускаю обновлённый контейнер..."
-docker compose -f "$COMPOSE_FILE" up -d --remove-orphans
+docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d --remove-orphans
 
 echo "Проверяю состояние сервиса..."
 ATTEMPT=1
 MAX_ATTEMPTS=15
 while [ "$ATTEMPT" -le "$MAX_ATTEMPTS" ]; do
-    if docker compose -f "$COMPOSE_FILE" ps --status running --services | grep -Fxq app; then
+    if docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" ps --status running --services | grep -Fxq app; then
         break
     fi
 
     if [ "$ATTEMPT" -eq "$MAX_ATTEMPTS" ]; then
         echo "Ошибка: сервис app не перешёл в состояние running." >&2
-        docker compose -f "$COMPOSE_FILE" ps >&2
-        docker compose -f "$COMPOSE_FILE" logs --tail 100 app >&2
+        docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" ps >&2
+        docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" logs --tail 100 app >&2
         exit 1
     fi
 
@@ -78,5 +79,5 @@ fi
 echo "Проверяю HTTP-ответ $HEALTH_URL..."
 curl --fail --silent --show-error --retry 5 --retry-delay 2 "$HEALTH_URL" >/dev/null
 
-docker compose -f "$COMPOSE_FILE" ps
+docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" ps
 echo "Развёртывание успешно завершено: $(git rev-parse --short HEAD)."
