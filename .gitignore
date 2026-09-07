@@ -6,6 +6,7 @@
 
 # Зависимости и временные файлы Symfony
 /vendor/
+/node_modules/
 /var/
 /public/bundles/
 /config/reference.php

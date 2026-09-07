@@ -12,6 +12,17 @@ docker compose up --build -d
 
 Приложение будет доступно на <http://localhost:8081>.
 
+В разделе «Песочница» PHP-код выполняется в новом одноразовом контейнере без сети,
+с файловой системой только для чтения и ограничениями CPU, памяти, процессов, времени и объёма вывода.
+Для каждого запуска необходим доступ runner-сервиса к Docker socket.
+
+После изменения исходников редактора в `assets` пересоберите локальный JavaScript:
+
+```bash
+npm install
+npm run build
+```
+
 Каталог функций автоматически синхронизируется с SQLite при запуске. Чтобы заранее загрузить документацию всего каталога из PHP Manual, выполните:
 
 ```bash
@@ -27,6 +38,9 @@ docker compose exec app php bin/console app:import-function-documentation
 ```bash
 docker compose -f compose.production.yaml up --build -d
 ```
+
+В `.env.production` необходимо задать случайный `SANDBOX_TOKEN` и числовой `DOCKER_GID` — группу,
+владеющую `/var/run/docker.sock` на сервере (её можно узнать через `stat -c '%g' /var/run/docker.sock`).
 
 В production приложение доступно по адресу <https://php-recall.aleksppv.ru>. Центральный Nginx
 должен находиться в сети `scheduler_backend` и проксировать запросы на `php-recall:8080`.

@@ -9,6 +9,7 @@ use App\Service\ConceptCatalog;
 use App\Service\FunctionCatalog;
 use App\Service\ManualService;
 use App\Service\MaterialStore;
+use App\Service\SandboxClient;
 use App\Service\UserStore;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -26,7 +27,38 @@ final class AppController extends AbstractController
         return $this->render('app/index.html.twig', [
             'logout_token' => $csrf->get($request, 'logout'),
             'knowledge_token' => $csrf->get($request, 'knowledge'),
+            'sandbox_token' => $csrf->get($request, 'sandbox'),
         ]);
+    }
+
+    /** Выполняет PHP-код в отдельном одноразовом контейнере. */
+    #[Route('/api/sandbox/run', name: 'api_sandbox_run', methods: ['POST'])]
+    public function runSandbox(Request $request, SandboxClient $sandbox, CsrfTokens $csrf): JsonResponse
+    {
+        if (!$csrf->isValid($request, 'sandbox', (string) $request->headers->get('X-CSRF-Token'))) {
+            return $this->json(['error' => 'Сессия устарела. Обновите страницу.'], Response::HTTP_FORBIDDEN);
+        }
+
+        $runs = array_values(array_filter(
+            (array) $request->getSession()->get('_sandbox_runs', []),
+            static fn (mixed $time): bool => is_int($time) && $time > time() - 60,
+        ));
+        if (count($runs) >= 10) {
+            return $this->json(['error' => 'Слишком много запусков. Повторите через минуту.'], Response::HTTP_TOO_MANY_REQUESTS);
+        }
+        $runs[] = time();
+        $request->getSession()->set('_sandbox_runs', $runs);
+
+        try {
+            $payload = $request->toArray();
+            $result = $sandbox->run(is_string($payload['code'] ?? null) ? $payload['code'] : '');
+
+            return $this->json($result);
+        } catch (\InvalidArgumentException $exception) {
+            return $this->json(['error' => $exception->getMessage()], Response::HTTP_UNPROCESSABLE_ENTITY);
+        } catch (\Throwable) {
+            return $this->json(['error' => 'Не удалось выполнить код в песочнице.'], Response::HTTP_BAD_GATEWAY);
+        }
     }
 
     /** Возвращает доступные категории и названия функций. */

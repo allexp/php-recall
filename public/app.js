@@ -1,5 +1,6 @@
 const elements = {
-    functionsMode: document.querySelector('#functions-mode'), conceptsMode: document.querySelector('#concepts-mode'),
+    functionsMode: document.querySelector('#functions-mode'), conceptsMode: document.querySelector('#concepts-mode'), sandboxMode: document.querySelector('#sandbox-mode'),
+    stage: document.querySelector('#stage'), categoryPicker: document.querySelector('#category-picker'), studyCard: document.querySelector('#study-card'), statistics: document.querySelector('#statistics'),
     category: document.querySelector('#category'), categoryLabel: document.querySelector('#category-label'),
     itemName: document.querySelector('#function-name'), prompt: document.querySelector('#prompt'),
     previous: document.querySelector('#previous'), next: document.querySelector('#next'), reveal: document.querySelector('#reveal'),
@@ -8,6 +9,8 @@ const elements = {
     source: document.querySelector('#source'), progress: document.querySelector('#progress'), knownCount: document.querySelector('#known-count'),
     revealCount: document.querySelector('#reveal-count'), categoryStatistics: document.querySelector('#category-statistics'),
     categoryStatisticsList: document.querySelector('#category-statistics-list'),
+    sandboxPanel: document.querySelector('#sandbox-panel'), sandboxCode: document.querySelector('#sandbox-code'), sandboxRun: document.querySelector('#sandbox-run'),
+    sandboxStatus: document.querySelector('#sandbox-status'), sandboxResult: document.querySelector('#sandbox-result'), sandboxOutput: document.querySelector('#sandbox-output'), sandboxError: document.querySelector('#sandbox-error'),
 };
 
 let functionCatalog = {}, conceptCatalog = {}, mode = 'functions', history = [], historyIndex = -1;
@@ -179,8 +182,32 @@ async function showFull() {
 
 function setMode(nextMode) {
     if (mode === nextMode) return;
-    mode = nextMode; elements.functionsMode.classList.toggle('active', mode === 'functions'); elements.conceptsMode.classList.toggle('active', mode === 'concepts');
+    mode = nextMode; elements.functionsMode.classList.toggle('active', mode === 'functions'); elements.conceptsMode.classList.toggle('active', mode === 'concepts'); elements.sandboxMode.classList.toggle('active', mode === 'sandbox');
+    const isSandbox = mode === 'sandbox';
+    elements.stage.classList.toggle('sandbox-stage', isSandbox);
+    elements.categoryPicker.classList.toggle('hidden', isSandbox); elements.studyCard.classList.toggle('hidden', isSandbox); elements.statistics.classList.toggle('hidden', isSandbox);
+    elements.previous.classList.toggle('hidden', isSandbox); elements.next.classList.toggle('hidden', isSandbox); elements.sandboxPanel.classList.toggle('hidden', !isSandbox);
+    if (elements.categoryStatistics) elements.categoryStatistics.classList.toggle('hidden', isSandbox || !elements.categoryStatisticsList.children.length);
+    if (isSandbox) { elements.progress.textContent = 'Безопасное выполнение PHP 8.3'; (window.phpSandboxEditor?.focus ?? (() => elements.sandboxCode.focus()))(); return; }
     refillCategories(); history = []; historyIndex = -1; renderCategoryStatistics(); showRandomItem();
+}
+
+async function runSandbox() {
+    elements.sandboxRun.disabled = true; elements.sandboxStatus.textContent = 'Создаю изолированный контейнер…';
+    elements.sandboxError.classList.add('hidden'); elements.sandboxResult.classList.add('hidden');
+    try {
+        const response = await fetch('api/sandbox/run', {
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': document.body.dataset.sandboxToken },
+            body: JSON.stringify({ code: window.phpSandboxEditor?.getValue() ?? elements.sandboxCode.value }),
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Не удалось выполнить код.');
+        elements.sandboxOutput.textContent = data.output || '(программа не вывела результат)';
+        elements.sandboxResult.classList.remove('hidden');
+        elements.sandboxStatus.textContent = data.timed_out ? 'Остановлено по тайм-ауту' : `Завершено, код выхода: ${data.exit_code}`;
+    } catch (error) {
+        elements.sandboxError.textContent = error.message; elements.sandboxError.classList.remove('hidden'); elements.sandboxStatus.textContent = 'Ошибка запуска';
+    } finally { elements.sandboxRun.disabled = false; }
 }
 
 elements.next.addEventListener('click', showRandomItem);
@@ -193,7 +220,10 @@ elements.previous.addEventListener('click', () => { if (historyIndex > 0) { hist
 elements.reveal.addEventListener('click', reveal); elements.showFull.addEventListener('click', showFull);
 elements.category.addEventListener('change', () => { history = []; historyIndex = -1; showRandomItem(); });
 elements.functionsMode.addEventListener('click', () => setMode('functions')); elements.conceptsMode.addEventListener('click', () => setMode('concepts'));
+elements.sandboxMode.addEventListener('click', () => setMode('sandbox')); elements.sandboxRun.addEventListener('click', runSandbox);
 document.addEventListener('keydown', (event) => {
+    if (mode === 'sandbox' && event.ctrlKey && event.key === 'Enter') { event.preventDefault(); runSandbox(); return; }
+    if (mode === 'sandbox') return;
     if (event.key === 'ArrowRight') showRandomItem();
     if (event.key === 'ArrowLeft' && historyIndex > 0) { historyIndex -= 1; renderItem(); }
     if ((event.key === ' ' || event.key === 'Enter') && !elements.reveal.classList.contains('hidden')) { event.preventDefault(); reveal(); }

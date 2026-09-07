@@ -9,11 +9,35 @@ services:
       - php-recall-data:/app/data
     networks:
       - scheduler_backend
+      - sandbox_internal
     mem_limit: 192m
+    environment:
+      SANDBOX_RUNNER_URL: http://sandbox-runner:8080
+      SANDBOX_TOKEN: ${SANDBOX_TOKEN:?SANDBOX_TOKEN must be set}
+    depends_on:
+      - sandbox-runner
+
+  sandbox-runner:
+    image: php-recall-sandbox:local
+    build:
+      context: sandbox
+    environment:
+      SANDBOX_IMAGE: php-recall-sandbox:local
+      SANDBOX_TOKEN: ${SANDBOX_TOKEN:?SANDBOX_TOKEN must be set}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    group_add:
+      - ${DOCKER_GID:?DOCKER_GID must be set}
+    networks:
+      - sandbox_internal
+    restart: unless-stopped
+    mem_limit: 96m
 
 networks:
   scheduler_backend:
     external: true
+  sandbox_internal:
+    internal: true
 
 volumes:
   php-recall-data:

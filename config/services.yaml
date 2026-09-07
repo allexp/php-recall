@@ -25,3 +25,8 @@ services:
     App\Service\UserStore:
         arguments:
             $databaseFile: '%app.user_database%'
+
+    App\Service\SandboxClient:
+        arguments:
+            $runnerUrl: '%env(SANDBOX_RUNNER_URL)%'
+            $runnerToken: '%env(SANDBOX_TOKEN)%'

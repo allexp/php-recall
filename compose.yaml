@@ -6,6 +6,24 @@ services:
     volumes:
       - user-data:/app/data
     restart: unless-stopped
+    environment:
+      SANDBOX_RUNNER_URL: http://sandbox-runner:8080
+      SANDBOX_TOKEN: ${SANDBOX_TOKEN:-development-sandbox-token}
+    depends_on:
+      - sandbox-runner
+
+  sandbox-runner:
+    image: php-recall-sandbox:local
+    build:
+      context: sandbox
+    environment:
+      SANDBOX_IMAGE: php-recall-sandbox:local
+      SANDBOX_TOKEN: ${SANDBOX_TOKEN:-development-sandbox-token}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    group_add:
+      - ${DOCKER_GID:-0}
+    restart: unless-stopped
 
 volumes:
   user-data:

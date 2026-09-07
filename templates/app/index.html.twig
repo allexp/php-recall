@@ -7,7 +7,7 @@
     <title>PHP Recall — тренажёр функций</title>
     <link rel="stylesheet" href="app.css">
 </head>
-<body data-authenticated="{{ app.session.get('user') ? '1' : '0' }}" data-knowledge-token="{{ knowledge_token }}">
+<body data-authenticated="{{ app.session.get('user') ? '1' : '0' }}" data-knowledge-token="{{ knowledge_token }}" data-sandbox-token="{{ sandbox_token }}">
     <header class="topbar">
         <a class="brand" href="./" aria-label="PHP Recall — на главную">
             <span class="brand-mark">&lt;?php</span>
@@ -16,8 +16,9 @@
         <nav class="content-switch" aria-label="Раздел обучения">
             <button class="switch-button active" id="functions-mode" type="button">PHP-функции</button>
             <button class="switch-button" id="concepts-mode" type="button">Концепции</button>
+            <button class="switch-button" id="sandbox-mode" type="button">Песочница</button>
         </nav>
-        <label class="category-picker">
+        <label class="category-picker" id="category-picker">
             <span>Категория</span>
             <select id="category" aria-label="Категория функций">
                 <option value="all">Все функции</option>
@@ -38,7 +39,7 @@
         </div>
     </header>
 
-    <main class="stage">
+    <main class="stage" id="stage">
         <button class="nav-button nav-prev" id="previous" type="button" aria-label="Предыдущая функция" disabled>←</button>
 
         <div class="content-column">
@@ -60,7 +61,29 @@
                 <a class="source hidden" id="source" target="_blank" rel="noopener noreferrer">Открыть на php.net ↗</a>
             </article>
 
-            <aside class="statistics" aria-labelledby="statistics-title">
+            <article class="card sandbox-card hidden" id="sandbox-panel">
+                <div class="eyebrow">Изолированное выполнение</div>
+                <h1 class="sandbox-title">PHP-песочница</h1>
+                <p class="prompt">Код запускается без сети и доступа к файлам приложения. Лимит выполнения — 2 секунды.</p>
+                <label class="sandbox-label" for="sandbox-code">PHP-код</label>
+                <textarea id="sandbox-code" class="sandbox-editor" spellcheck="false" maxlength="20000"><?php
+
+$numbers = [1, 2, 3, 4];
+$squares = array_map(fn (int $number): int => $number ** 2, $numbers);
+
+print_r($squares);</textarea>
+                <div class="sandbox-toolbar">
+                    <button class="primary" id="sandbox-run" type="button">Запустить <span class="shortcut">Ctrl + Enter</span></button>
+                    <span class="sandbox-status" id="sandbox-status">Готово к запуску</span>
+                </div>
+                <section class="sandbox-result hidden" id="sandbox-result" aria-live="polite">
+                    <div class="sandbox-result-title">Результат</div>
+                    <pre><code id="sandbox-output"></code></pre>
+                </section>
+                <div class="error hidden" id="sandbox-error"></div>
+            </article>
+
+            <aside class="statistics" id="statistics" aria-labelledby="statistics-title">
                 <div>
                     <div class="statistics-title" id="statistics-title">Статистика</div>
                     <div class="statistics-hint">Сохраняется в этом браузере</div>
@@ -92,6 +115,7 @@
     </main>
 
     <footer>Сначала попробуйте ответить сами — узнавание запоминается хуже, чем припоминание.</footer>
+    <script src="sandbox-editor.js" defer></script>
     <script src="app.js" defer></script>
 </body>
 </html>
