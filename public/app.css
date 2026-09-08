@@ -86,9 +86,18 @@ select { min-width: 220px; padding: 11px 36px 11px 14px; color: var(--text); bac
 .stage.sandbox-stage { width: min(1240px, calc(100% - 40px)); grid-template-columns: minmax(0, 1100px); padding-top: clamp(36px, 7vh, 72px); }
 .stage.sandbox-stage .content-column { width: 100%; grid-column: 1; }
 .card { min-height: 410px; padding: clamp(28px, 5vw, 60px); border: 1px solid var(--border); border-radius: 24px; background: rgba(21, 25, 31, .9); box-shadow: 0 28px 80px rgba(0, 0, 0, .3); }
-.quiz-mode { display: inline-flex; gap: 3px; margin-bottom: 28px; padding: 3px; border: 1px solid var(--border); border-radius: 9px; background: #101419; }
+.study-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 28px; }
+.quiz-mode { display: inline-flex; flex-wrap: wrap; gap: 3px; max-width: 100%; padding: 3px; border: 1px solid var(--border); border-radius: 9px; background: #101419; }
 .quiz-mode-button { padding: 6px 9px; border: 0; border-radius: 6px; color: var(--muted); background: transparent; font-size: 12px; font-weight: 700; }
 .quiz-mode-button.active { color: var(--text); background: var(--surface-raised); }
+.repeat-control { display: flex; align-items: center; gap: 10px; }
+.repeat-toggle { padding: 7px 11px; border: 1px solid var(--border); border-radius: 8px; color: var(--muted); background: transparent; font-size: 12px; font-weight: 700; }
+.repeat-toggle:hover { border-color: var(--muted); color: var(--text); }
+.repeat-toggle.active { border-color: rgba(168, 255, 120, .45); color: var(--accent); background: var(--accent-dark); }
+.repeat-progress { color: var(--text); font: 700 13px/1 ui-monospace, SFMono-Regular, Consolas, monospace; }
+.cycle-complete { padding: 42px 0; text-align: center; }
+.cycle-complete h1 { margin-bottom: 12px; }
+.cycle-complete p { margin: 0 0 28px; color: var(--muted); }
 .eyebrow { color: var(--accent); font-size: 12px; font-weight: 750; letter-spacing: .14em; text-transform: uppercase; }
 h1 { margin: 18px 0 12px; font: 700 clamp(36px, 7vw, 72px)/1 ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: -.06em; overflow-wrap: anywhere; }
 .question-definition { margin: 18px 0 12px; color: var(--text); font-size: clamp(21px, 3vw, 29px); font-weight: 650; line-height: 1.35; }

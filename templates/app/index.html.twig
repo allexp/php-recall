@@ -44,10 +44,22 @@
 
         <div class="content-column">
             <article class="card" id="study-card" aria-live="polite">
-                <div class="quiz-mode" id="quiz-mode" role="group" aria-label="Режим карточек функций">
-                    <button class="quiz-mode-button active" id="quiz-by-name" type="button" aria-pressed="true">По названию</button>
-                    <button class="quiz-mode-button" id="quiz-by-definition" type="button" aria-pressed="false">По определению</button>
+                <div class="study-controls">
+                    <div class="quiz-mode" id="quiz-mode" role="group" aria-label="Режим карточек функций">
+                        <button class="quiz-mode-button active" id="quiz-by-name" type="button" aria-pressed="true">По названию</button>
+                        <button class="quiz-mode-button" id="quiz-by-definition" type="button" aria-pressed="false">По определению</button>
+                    </div>
+                    <div class="repeat-control" id="repeat-control">
+                        <button class="repeat-toggle" id="without-repeats" type="button" aria-pressed="false">Без повторений</button>
+                        <span class="repeat-progress hidden" id="repeat-progress" aria-live="polite">0/0</span>
+                    </div>
                 </div>
+                <section class="cycle-complete hidden" id="cycle-complete" aria-live="polite">
+                    <h1>Все функции показаны</h1>
+                    <p>Вы просмотрели все функции из выбранной категории.</p>
+                    <button class="primary" id="reset-cycle" type="button">Сбросить</button>
+                </section>
+                <div id="study-content">
                 <div class="eyebrow" id="category-label">Функция PHP</div>
                 <h1 id="function-name">…</h1>
                 <p class="question-definition hidden" id="question-definition"></p>
@@ -64,6 +76,7 @@
                 <section class="manual hidden" id="manual"></section>
                 <button class="secondary full-button hidden" id="show-full" type="button">Показать полностью</button>
                 <a class="source hidden" id="source" target="_blank" rel="noopener noreferrer">Открыть на php.net ↗</a>
+                </div>
             </article>
 
             <article class="card sandbox-card hidden" id="sandbox-panel">

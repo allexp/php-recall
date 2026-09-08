@@ -2,7 +2,10 @@ const elements = {
     functionsMode: document.querySelector('#functions-mode'), conceptsMode: document.querySelector('#concepts-mode'), sandboxMode: document.querySelector('#sandbox-mode'),
     stage: document.querySelector('#stage'), categoryPicker: document.querySelector('#category-picker'), studyCard: document.querySelector('#study-card'), statistics: document.querySelector('#statistics'),
     category: document.querySelector('#category'), categoryLabel: document.querySelector('#category-label'),
-    quizMode: document.querySelector('#quiz-mode'), quizByName: document.querySelector('#quiz-by-name'), quizByDefinition: document.querySelector('#quiz-by-definition'),
+    studyControls: document.querySelector('.study-controls'), quizMode: document.querySelector('#quiz-mode'), quizByName: document.querySelector('#quiz-by-name'), quizByDefinition: document.querySelector('#quiz-by-definition'),
+    repeatControl: document.querySelector('#repeat-control'), withoutRepeats: document.querySelector('#without-repeats'), repeatProgress: document.querySelector('#repeat-progress'),
+    studyContent: document.querySelector('#study-content'),
+    cycleComplete: document.querySelector('#cycle-complete'), resetCycle: document.querySelector('#reset-cycle'),
     itemName: document.querySelector('#function-name'), questionDefinition: document.querySelector('#question-definition'), prompt: document.querySelector('#prompt'),
     previous: document.querySelector('#previous'), next: document.querySelector('#next'), reveal: document.querySelector('#reveal'),
     known: document.querySelector('#known'), showFull: document.querySelector('#show-full'), loading: document.querySelector('#loading'),
@@ -15,6 +18,8 @@ const elements = {
 };
 
 let functionCatalog = {}, conceptCatalog = {}, mode = 'functions', quizMode = 'name', history = [], historyIndex = -1;
+let withoutRepeats = false;
+const shownFunctions = new Set();
 const documentation = new Map();
 const isAuthenticated = document.body.dataset.authenticated === '1';
 const knownItems = { functions: new Set(), concepts: new Set() };
@@ -108,17 +113,41 @@ async function setKnowledge(slug, isKnown) {
 function showRandomItem() {
     const pool = currentPool();
     if (!pool.length) return;
-    const alternatives = pool.filter((slug) => slug !== history[historyIndex]);
-    const choices = alternatives.length ? alternatives : pool;
+    const available = mode === 'functions' && withoutRepeats ? pool.filter((slug) => !shownFunctions.has(slug)) : pool;
+    if (!available.length) { renderCycleComplete(pool.length); return; }
+    const alternatives = available.filter((slug) => slug !== history[historyIndex]);
+    const choices = alternatives.length ? alternatives : available;
     history = history.slice(0, historyIndex + 1);
     history.push(choices[Math.floor(Math.random() * choices.length)]);
     historyIndex = history.length - 1;
+    if (mode === 'functions' && withoutRepeats) shownFunctions.add(history[historyIndex]);
+    updateCycleProgress();
     renderItem();
+}
+
+function updateCycleProgress() {
+    elements.repeatProgress.textContent = `${shownFunctions.size}/${currentPool().length}`;
+    elements.repeatProgress.classList.toggle('hidden', !withoutRepeats || mode !== 'functions');
+}
+
+function renderCycleComplete(total) {
+    elements.studyContent.classList.add('hidden');
+    elements.cycleComplete.classList.remove('hidden');
+    elements.previous.disabled = historyIndex <= 0;
+    elements.progress.textContent = `${total} функций показано без повторений`;
+}
+
+function resetFunctionCycle() {
+    shownFunctions.clear(); history = []; historyIndex = -1;
+    elements.cycleComplete.classList.add('hidden'); elements.studyContent.classList.remove('hidden');
+    updateCycleProgress();
+    showRandomItem();
 }
 
 function renderItem() {
     const slug = history[historyIndex], concept = mode === 'concepts' ? conceptSummary(slug) : null;
     const isDefinitionQuiz = mode === 'functions' && quizMode === 'definition';
+    elements.cycleComplete.classList.add('hidden'); elements.studyContent.classList.remove('hidden');
     elements.itemName.textContent = isDefinitionQuiz ? '' : (mode === 'functions' ? `${slug}()` : concept?.title ?? slug);
     elements.quizMode.classList.toggle('hidden', mode !== 'functions');
     elements.itemName.classList.toggle('hidden', isDefinitionQuiz);
@@ -221,7 +250,9 @@ function setMode(nextMode) {
     elements.previous.classList.toggle('hidden', isSandbox); elements.next.classList.toggle('hidden', isSandbox); elements.sandboxPanel.classList.toggle('hidden', !isSandbox);
     if (elements.categoryStatistics) elements.categoryStatistics.classList.toggle('hidden', isSandbox || !elements.categoryStatisticsList.children.length);
     if (isSandbox) { elements.progress.textContent = 'Безопасное выполнение PHP 8.3'; (window.phpSandboxEditor?.focus ?? (() => elements.sandboxCode.focus()))(); return; }
-    refillCategories(); history = []; historyIndex = -1; renderCategoryStatistics(); showRandomItem();
+    elements.studyControls.classList.toggle('hidden', mode !== 'functions');
+    elements.repeatControl.classList.toggle('hidden', mode !== 'functions');
+    refillCategories(); shownFunctions.clear(); history = []; historyIndex = -1; renderCategoryStatistics(); showRandomItem();
 }
 
 function setQuizMode(nextQuizMode) {
@@ -229,7 +260,15 @@ function setQuizMode(nextQuizMode) {
     quizMode = nextQuizMode;
     elements.quizByName.classList.toggle('active', quizMode === 'name'); elements.quizByDefinition.classList.toggle('active', quizMode === 'definition');
     elements.quizByName.setAttribute('aria-pressed', String(quizMode === 'name')); elements.quizByDefinition.setAttribute('aria-pressed', String(quizMode === 'definition'));
-    renderItem();
+    if (elements.cycleComplete.classList.contains('hidden')) renderItem();
+}
+
+function setWithoutRepeats(enabled) {
+    withoutRepeats = enabled;
+    elements.withoutRepeats.classList.toggle('active', withoutRepeats);
+    elements.withoutRepeats.setAttribute('aria-pressed', String(withoutRepeats));
+    updateCycleProgress();
+    resetFunctionCycle();
 }
 
 async function runSandbox() {
@@ -258,13 +297,19 @@ elements.known.addEventListener('click', async () => {
 });
 elements.previous.addEventListener('click', () => { if (historyIndex > 0) { historyIndex -= 1; renderItem(); } });
 elements.reveal.addEventListener('click', reveal); elements.showFull.addEventListener('click', showFull);
-elements.category.addEventListener('change', () => { history = []; historyIndex = -1; showRandomItem(); });
+elements.category.addEventListener('change', resetFunctionCycle);
 elements.functionsMode.addEventListener('click', () => setMode('functions')); elements.conceptsMode.addEventListener('click', () => setMode('concepts'));
 elements.quizByName.addEventListener('click', () => setQuizMode('name')); elements.quizByDefinition.addEventListener('click', () => setQuizMode('definition'));
+elements.withoutRepeats.addEventListener('click', () => setWithoutRepeats(!withoutRepeats));
+elements.resetCycle.addEventListener('click', resetFunctionCycle);
 elements.sandboxMode.addEventListener('click', () => setMode('sandbox')); elements.sandboxRun.addEventListener('click', runSandbox);
 document.addEventListener('keydown', (event) => {
     if (mode === 'sandbox' && event.ctrlKey && event.key === 'Enter') { event.preventDefault(); runSandbox(); return; }
     if (mode === 'sandbox') return;
+    if (!elements.cycleComplete.classList.contains('hidden')) {
+        if (event.key === 'ArrowLeft' && historyIndex > 0) { historyIndex -= 1; renderItem(); }
+        return;
+    }
     if (event.key === 'ArrowRight') showRandomItem();
     if (event.key === 'ArrowLeft' && historyIndex > 0) { historyIndex -= 1; renderItem(); }
     if ((event.key === ' ' || event.key === 'Enter') && !elements.reveal.classList.contains('hidden')) { event.preventDefault(); reveal(); }
