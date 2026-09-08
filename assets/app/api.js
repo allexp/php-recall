@@ -61,3 +61,11 @@ export function runCode(code) {
         body: JSON.stringify({ code }),
     }, 'Не удалось выполнить код.');
 }
+
+export function loadTask(difficulty) {
+    return jsonRequest(`api/tasks/${encodeURIComponent(difficulty)}`, undefined, 'Не удалось загрузить задачу.');
+}
+
+export function loadTaskSolution(id) {
+    return jsonRequest(`api/tasks/${id}/solution`, undefined, 'Не удалось загрузить решение.');
+}

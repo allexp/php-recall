@@ -18,6 +18,7 @@
         <nav class="content-switch" aria-label="Раздел обучения">
             <button class="switch-button active" id="functions-mode" type="button">Функции</button>
             <button class="switch-button" id="concepts-mode" type="button">Концепции</button>
+            <button class="switch-button" id="tasks-mode" type="button">Задачи</button>
             <button class="switch-button" id="sandbox-mode" type="button">Песочница</button>
         </nav>
         <label class="category-picker" id="category-picker">
@@ -101,6 +102,27 @@ print_r($squares);</textarea>
                     <pre><code id="sandbox-output"></code></pre>
                 </section>
                 <div class="error hidden" id="sandbox-error"></div>
+            </article>
+
+            <article class="card task-card hidden" id="tasks-panel">
+                <div class="task-heading">
+                    <div><div class="eyebrow" id="task-level-label">Лёгкая задача</div><h1 class="task-title" id="task-title">Загрузка…</h1></div>
+                    <label class="task-difficulty">Сложность
+                        <select id="task-difficulty"><option value="easy">Лёгкие</option><option value="medium">Средние</option><option value="hard">Сложные</option></select>
+                    </label>
+                </div>
+                <p class="task-description" id="task-description"></p>
+                <label class="sandbox-label" for="task-code">Ваше решение</label>
+                <textarea id="task-code" class="sandbox-editor" spellcheck="false" maxlength="20000"></textarea>
+                <div class="sandbox-toolbar task-toolbar">
+                    <button class="primary" id="task-run" type="button">Выполнить</button>
+                    <button class="secondary" id="task-solution-show" type="button">Показать решение</button>
+                    <button class="secondary" id="task-next" type="button">Другая задача</button>
+                    <span class="sandbox-status" id="task-status"></span>
+                </div>
+                <section class="sandbox-result hidden" id="task-result"><div class="sandbox-result-title">Результат</div><pre><code id="task-output"></code></pre></section>
+                <section class="task-solution hidden" id="task-solution"><div class="sandbox-result-title">Вариант решения</div><pre><code id="task-solution-code"></code></pre></section>
+                <div class="error hidden" id="task-error"></div>
             </article>
 
             <aside class="statistics" id="statistics" aria-labelledby="statistics-title">

@@ -2,6 +2,7 @@ import { loadCatalogs, loadKnowledge } from './api.js';
 import { elements } from './dom.js';
 import { runSandbox } from './sandbox.js';
 import { state } from './state.js';
+import { revealTaskSolution, runTask, showTask } from './tasks.js';
 import {
     initialiseView,
     markCurrentAsKnown,
@@ -23,12 +24,17 @@ elements.showFull.addEventListener('click', showFull);
 elements.category.addEventListener('change', resetFunctionCycle);
 elements.functionsMode.addEventListener('click', () => setMode('functions'));
 elements.conceptsMode.addEventListener('click', () => setMode('concepts'));
+elements.tasksMode.addEventListener('click', () => { setMode('tasks'); showTask(); });
 elements.quizByName.addEventListener('click', () => setQuizMode('name'));
 elements.quizByDefinition.addEventListener('click', () => setQuizMode('definition'));
 elements.withoutRepeats.addEventListener('click', () => setWithoutRepeats(!state.withoutRepeats));
 elements.resetCycle.addEventListener('click', resetFunctionCycle);
 elements.sandboxMode.addEventListener('click', () => setMode('sandbox'));
 elements.sandboxRun.addEventListener('click', runSandbox);
+elements.taskDifficulty.addEventListener('change', showTask);
+elements.taskNext.addEventListener('click', showTask);
+elements.taskRun.addEventListener('click', runTask);
+elements.taskSolutionShow.addEventListener('click', revealTaskSolution);
 
 document.addEventListener('keydown', (event) => {
     if (state.mode === 'sandbox' && event.ctrlKey && event.key === 'Enter') {
@@ -37,6 +43,7 @@ document.addEventListener('keydown', (event) => {
         return;
     }
     if (state.mode === 'sandbox') return;
+    if (state.mode === 'tasks') return;
     if (!elements.cycleComplete.classList.contains('hidden')) {
         if (event.key === 'ArrowLeft') showPreviousItem();
         return;

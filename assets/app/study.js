@@ -151,22 +151,31 @@ export function setMode(nextMode) {
     state.mode = nextMode;
     elements.functionsMode.classList.toggle('active', state.mode === 'functions');
     elements.conceptsMode.classList.toggle('active', state.mode === 'concepts');
+    elements.tasksMode.classList.toggle('active', state.mode === 'tasks');
     elements.sandboxMode.classList.toggle('active', state.mode === 'sandbox');
     const isSandbox = state.mode === 'sandbox';
-    elements.stage.classList.toggle('sandbox-stage', isSandbox);
-    elements.categoryPicker.classList.toggle('hidden', isSandbox);
-    elements.studyCard.classList.toggle('hidden', isSandbox);
-    elements.statistics.classList.toggle('hidden', isSandbox);
-    elements.previous.classList.toggle('hidden', isSandbox);
-    elements.next.classList.toggle('hidden', isSandbox);
+    const isTask = state.mode === 'tasks';
+    const isStandalone = isSandbox || isTask;
+    elements.stage.classList.toggle('sandbox-stage', isStandalone);
+    elements.categoryPicker.classList.toggle('hidden', isStandalone);
+    elements.studyCard.classList.toggle('hidden', isStandalone);
+    elements.statistics.classList.toggle('hidden', isStandalone);
+    elements.previous.classList.toggle('hidden', isStandalone);
+    elements.next.classList.toggle('hidden', isStandalone);
     elements.sandboxPanel.classList.toggle('hidden', !isSandbox);
+    elements.tasksPanel.classList.toggle('hidden', !isTask);
     if (elements.categoryStatistics) {
-        elements.categoryStatistics.classList.toggle('hidden', isSandbox || !elements.categoryStatisticsList.children.length);
+        elements.categoryStatistics.classList.toggle('hidden', isStandalone || !elements.categoryStatisticsList.children.length);
     }
     // Sandbox использует отдельную панель и не участвует в цикле учебных карточек.
     if (isSandbox) {
         elements.progress.textContent = 'Безопасное выполнение PHP 8.3';
         (window.phpSandboxEditor?.focus ?? (() => elements.sandboxCode.focus()))();
+        return;
+    }
+    if (isTask) {
+        elements.progress.textContent = 'Практические задачи по PHP';
+        (window.phpTaskEditor?.focus ?? (() => elements.taskCode.focus()))();
         return;
     }
     elements.studyControls.classList.toggle('hidden', state.mode !== 'functions');

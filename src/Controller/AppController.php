@@ -11,6 +11,7 @@ use App\Service\ManualService;
 use App\Service\MaterialStore;
 use App\Service\SandboxClient;
 use App\Service\UserStore;
+use App\Service\TaskStore;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -73,6 +74,22 @@ final class AppController extends AbstractController
     public function concepts(ConceptCatalog $catalog): JsonResponse
     {
         return $this->json($catalog->all());
+    }
+
+    /** Возвращает одну случайную задачу выбранной сложности. */
+    #[Route('/api/tasks/{difficulty}', name: 'api_task', requirements: ['difficulty' => 'easy|medium|hard'], methods: ['GET'])]
+    public function task(string $difficulty, TaskStore $tasks): JsonResponse
+    {
+        $task = $tasks->random($difficulty);
+        return $task === null ? $this->json(['error' => 'Задачи этого уровня пока не добавлены.'], Response::HTTP_NOT_FOUND) : $this->json($task);
+    }
+
+    /** Возвращает эталонное решение задачи. */
+    #[Route('/api/tasks/{id}/solution', name: 'api_task_solution', requirements: ['id' => '\\d+'], methods: ['GET'])]
+    public function taskSolution(int $id, TaskStore $tasks): JsonResponse
+    {
+        $solution = $tasks->solution($id);
+        return $solution === null ? $this->json(['error' => 'Задача не найдена.'], Response::HTTP_NOT_FOUND) : $this->json(['solution' => $solution]);
     }
 
     /** Возвращает полное описание концепции с раскрываемыми подсекциями. */

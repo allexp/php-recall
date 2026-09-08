@@ -21,19 +21,23 @@ const phpHighlightStyle = HighlightStyle.define([
     {tag: [tags.punctuation, tags.separator], color: '#a6accd'},
 ]);
 
-const textarea = document.querySelector('#sandbox-code');
 const storageKey = 'php_recall_sandbox_code';
 
-if (textarea) {
+function createPhpEditor(selector, runButtonSelector, persist = false) {
+    const textarea = document.querySelector(selector);
+    if (!textarea) return null;
+
     let initialCode = textarea.value;
-    try {
-        initialCode = localStorage.getItem(storageKey) ?? initialCode;
-    } catch {
-        // Редактор продолжает работать, если браузер запретил локальное хранилище.
+    if (persist) {
+        try {
+            initialCode = localStorage.getItem(storageKey) ?? initialCode;
+        } catch {
+            // Редактор продолжает работать, если браузер запретил локальное хранилище.
+        }
     }
 
     const runCode = () => {
-        document.querySelector('#sandbox-run')?.click();
+        document.querySelector(runButtonSelector)?.click();
         return true;
     };
     const state = EditorState.create({
@@ -49,7 +53,7 @@ if (textarea) {
                 ...defaultKeymap,
             ]),
             EditorView.updateListener.of((update) => {
-                if (!update.docChanged) return;
+                if (!persist || !update.docChanged) return;
                 try {
                     localStorage.setItem(storageKey, update.state.doc.toString());
                 } catch {
@@ -73,8 +77,12 @@ if (textarea) {
     const view = new EditorView({state, parent: editorHost});
     textarea.remove();
 
-    window.phpSandboxEditor = {
+    return {
         getValue: () => view.state.doc.toString(),
         focus: () => view.focus(),
+        setValue: (code) => view.dispatch({changes: {from: 0, to: view.state.doc.length, insert: code}}),
     };
 }
+
+window.phpSandboxEditor = createPhpEditor('#sandbox-code', '#sandbox-run', true);
+window.phpTaskEditor = createPhpEditor('#task-code', '#task-run');

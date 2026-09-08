@@ -53,6 +53,15 @@ select { min-width: 220px; padding: 11px 36px 11px 14px; color: var(--text); bac
 .link-button:hover, .account-link:hover { color: var(--accent); }
 
 .sandbox-card { width: 100%; min-height: 620px; padding: clamp(28px, 4vw, 52px); }
+.task-card { width: 100%; padding: clamp(28px, 4vw, 52px); }
+.task-heading { display: flex; align-items: start; justify-content: space-between; gap: 28px; }
+.task-title { margin-top: 14px; font-size: clamp(30px, 5vw, 48px); }
+.task-difficulty { display: grid; gap: 8px; color: var(--muted); font-size: 13px; font-weight: 700; }
+.task-difficulty select { min-width: 170px; }
+.task-description { max-width: 760px; color: #dce2e8; font-size: 18px; line-height: 1.65; }
+.task-solution { margin-top: 28px; padding-top: 24px; border-top: 1px solid var(--border); }
+.task-toolbar { flex-wrap: wrap; }
+.task-toolbar button:disabled { opacity: .55; cursor: wait; }
 .sandbox-title { margin-bottom: 12px; font-size: clamp(34px, 6vw, 58px); }
 .sandbox-label { display: block; margin: 30px 0 10px; color: var(--muted); font-size: 13px; font-weight: 700; }
 .sandbox-editor { display: block; width: 100%; min-height: 360px; resize: vertical; padding: 20px; border: 1px solid var(--border); border-radius: 12px; outline: none; color: #d8ffca; background: #0d1014; font: 15px/1.65 ui-monospace, SFMono-Regular, Consolas, monospace; tab-size: 4; }
@@ -60,8 +69,10 @@ select { min-width: 220px; padding: 11px 36px 11px 14px; color: var(--text); bac
 .sandbox-editor-host { width: 100%; }
 .sandbox-editor:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(168, 255, 120, .1); }
 .sandbox-card .cm-editor { min-height: 360px; max-height: 620px; overflow: hidden; border: 1px solid var(--border); border-radius: 12px; font: 15px/1.65 ui-monospace, SFMono-Regular, Consolas, monospace; }
+.task-card .cm-editor { min-height: 360px; max-height: 620px; overflow: hidden; border: 1px solid var(--border); border-radius: 12px; font: 15px/1.65 ui-monospace, SFMono-Regular, Consolas, monospace; }
 .sandbox-card .cm-editor.cm-focused { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(168, 255, 120, .1); }
-.sandbox-card .cm-scroller { overflow: auto; }
+.task-card .cm-editor.cm-focused { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(168, 255, 120, .1); }
+.sandbox-card .cm-scroller, .task-card .cm-scroller { overflow: auto; }
 .sandbox-toolbar { display: flex; align-items: center; gap: 16px; margin-top: 16px; }
 .sandbox-toolbar button:disabled { opacity: .55; cursor: wait; }
 .shortcut { margin-left: 8px; opacity: .62; font-size: 11px; }
@@ -185,6 +196,8 @@ footer { padding: 0 20px 28px; color: #65707c; font-size: 12px; text-align: cent
     .actions { flex-wrap: wrap; }
     .statistics { align-items: flex-start; flex-direction: column; }
     .sandbox-toolbar { align-items: flex-start; flex-direction: column; }
+    .task-heading { flex-direction: column; }
     .sandbox-editor { min-height: 320px; padding: 15px; font-size: 13px; }
     .sandbox-card .cm-editor { min-height: 320px; font-size: 13px; }
+    .task-card .cm-editor { min-height: 320px; font-size: 13px; }
 }
