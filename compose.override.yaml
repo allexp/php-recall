@@ -1,0 +1,12 @@
+services:
+  app:
+    environment:
+      APP_ENV: dev
+      APP_DEBUG: 1
+    volumes:
+      - ./bin:/app/bin
+      - ./config:/app/config
+      - ./public:/app/public
+      - ./src:/app/src
+      - ./templates:/app/templates
+
