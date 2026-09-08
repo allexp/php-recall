@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="Тренажёр для изучения функций PHP">
     <title>PHP Recall — тренажёр функций</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="shortcut icon" type="image/png" href="favicon.png">
     <link rel="stylesheet" href="app.css">
 </head>
 <body data-authenticated="{{ app.session.get('user') ? '1' : '0' }}" data-knowledge-token="{{ knowledge_token }}" data-sandbox-token="{{ sandbox_token }}">
@@ -14,7 +16,7 @@
             <span>Recall</span>
         </a>
         <nav class="content-switch" aria-label="Раздел обучения">
-            <button class="switch-button active" id="functions-mode" type="button">PHP-функции</button>
+            <button class="switch-button active" id="functions-mode" type="button">Функции</button>
             <button class="switch-button" id="concepts-mode" type="button">Концепции</button>
             <button class="switch-button" id="sandbox-mode" type="button">Песочница</button>
         </nav>
