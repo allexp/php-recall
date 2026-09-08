@@ -2,7 +2,7 @@
   "name": "php-recall-frontend",
   "private": true,
   "scripts": {
-    "build": "esbuild assets/sandbox-editor.js --bundle --minify --outfile=public/sandbox-editor.js"
+    "build": "esbuild assets/app/main.js --bundle --minify --outfile=public/app.js && esbuild assets/sandbox-editor.js --bundle --minify --outfile=public/sandbox-editor.js"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.18.6",
