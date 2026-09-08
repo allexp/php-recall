@@ -18,7 +18,8 @@ final class SandboxClientTest extends TestCase
             self::assertSame('POST', $method);
             self::assertSame('http://runner:8080/run', $url);
             self::assertContains('Authorization: Bearer secret', $options['headers']);
-            self::assertStringContainsString('<?php', (string) $options['body']);
+            $requestBody = json_decode((string) $options['body'], true, flags: JSON_THROW_ON_ERROR);
+            self::assertStringContainsString('<?php', $requestBody['code']);
 
             return new MockResponse('{"output":"42","exit_code":0,"timed_out":false}');
         });

@@ -44,8 +44,13 @@
 
         <div class="content-column">
             <article class="card" id="study-card" aria-live="polite">
+                <div class="quiz-mode" id="quiz-mode" role="group" aria-label="Режим карточек функций">
+                    <button class="quiz-mode-button active" id="quiz-by-name" type="button" aria-pressed="true">По названию</button>
+                    <button class="quiz-mode-button" id="quiz-by-definition" type="button" aria-pressed="false">По определению</button>
+                </div>
                 <div class="eyebrow" id="category-label">Функция PHP</div>
                 <h1 id="function-name">…</h1>
+                <p class="question-definition hidden" id="question-definition"></p>
                 <p class="prompt" id="prompt">Вспомните, что делает эта функция.</p>
 
                 <div class="actions">

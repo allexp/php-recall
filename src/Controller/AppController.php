@@ -142,6 +142,8 @@ final class AppController extends AbstractController
             ).'</code></pre>';
 
             return $this->json([
+                'definition' => $documentation['definition'],
+                'short_description' => $documentation['short_description'],
                 'summary' => $summary,
                 'full' => $documentation['full_description'],
                 'source' => $documentation['source_url'],

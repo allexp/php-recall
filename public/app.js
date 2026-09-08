@@ -2,7 +2,8 @@ const elements = {
     functionsMode: document.querySelector('#functions-mode'), conceptsMode: document.querySelector('#concepts-mode'), sandboxMode: document.querySelector('#sandbox-mode'),
     stage: document.querySelector('#stage'), categoryPicker: document.querySelector('#category-picker'), studyCard: document.querySelector('#study-card'), statistics: document.querySelector('#statistics'),
     category: document.querySelector('#category'), categoryLabel: document.querySelector('#category-label'),
-    itemName: document.querySelector('#function-name'), prompt: document.querySelector('#prompt'),
+    quizMode: document.querySelector('#quiz-mode'), quizByName: document.querySelector('#quiz-by-name'), quizByDefinition: document.querySelector('#quiz-by-definition'),
+    itemName: document.querySelector('#function-name'), questionDefinition: document.querySelector('#question-definition'), prompt: document.querySelector('#prompt'),
     previous: document.querySelector('#previous'), next: document.querySelector('#next'), reveal: document.querySelector('#reveal'),
     known: document.querySelector('#known'), showFull: document.querySelector('#show-full'), loading: document.querySelector('#loading'),
     error: document.querySelector('#error'), answer: document.querySelector('#answer'), manual: document.querySelector('#manual'),
@@ -13,7 +14,7 @@ const elements = {
     sandboxStatus: document.querySelector('#sandbox-status'), sandboxResult: document.querySelector('#sandbox-result'), sandboxOutput: document.querySelector('#sandbox-output'), sandboxError: document.querySelector('#sandbox-error'),
 };
 
-let functionCatalog = {}, conceptCatalog = {}, mode = 'functions', history = [], historyIndex = -1;
+let functionCatalog = {}, conceptCatalog = {}, mode = 'functions', quizMode = 'name', history = [], historyIndex = -1;
 const documentation = new Map();
 const isAuthenticated = document.body.dataset.authenticated === '1';
 const knownItems = { functions: new Set(), concepts: new Set() };
@@ -53,6 +54,11 @@ function categoryTitle(slug) {
 }
 function conceptSummary(slug) {
     return Object.values(conceptCatalog).flatMap((category) => category.materials).find((item) => item.slug === slug);
+}
+
+function definitionWithoutFunctionName(definition, slug) {
+    const escapedSlug = slug.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return definition.replace(new RegExp(`^\\s*${escapedSlug}(?:\\s*\\(\\s*\\))?\\s*(?:[—–:-]\\s*)?`, 'i'), '').trim();
 }
 
 function refillCategories() {
@@ -112,9 +118,13 @@ function showRandomItem() {
 
 function renderItem() {
     const slug = history[historyIndex], concept = mode === 'concepts' ? conceptSummary(slug) : null;
-    elements.itemName.textContent = mode === 'functions' ? `${slug}()` : concept?.title ?? slug;
+    const isDefinitionQuiz = mode === 'functions' && quizMode === 'definition';
+    elements.itemName.textContent = isDefinitionQuiz ? '' : (mode === 'functions' ? `${slug}()` : concept?.title ?? slug);
+    elements.quizMode.classList.toggle('hidden', mode !== 'functions');
+    elements.itemName.classList.toggle('hidden', isDefinitionQuiz);
+    elements.questionDefinition.classList.add('hidden'); elements.questionDefinition.textContent = '';
     elements.categoryLabel.textContent = categoryTitle(slug);
-    elements.prompt.textContent = mode === 'functions' ? 'Вспомните, что делает эта функция.' : 'Вспомните определение и смысл этой концепции.';
+    elements.prompt.textContent = mode === 'functions' ? (isDefinitionQuiz ? 'Вспомните название этой функции.' : 'Вспомните, что делает эта функция.') : 'Вспомните определение и смысл этой концепции.';
     elements.previous.disabled = historyIndex <= 0;
     elements.progress.textContent = `${currentPool().length} ${mode === 'functions' ? 'функций' : 'концепций'} в подборке`;
     elements.reveal.textContent = 'Показать';
@@ -122,6 +132,22 @@ function renderItem() {
     elements.showFull.classList.add('hidden'); elements.loading.classList.add('hidden'); elements.error.classList.add('hidden');
     elements.answer.classList.add('hidden'); elements.manual.classList.add('hidden'); elements.source.classList.add('hidden');
     elements.answer.replaceChildren(); elements.manual.replaceChildren();
+    if (isDefinitionQuiz) renderDefinitionQuestion(slug);
+}
+
+async function renderDefinitionQuestion(slug) {
+    elements.loading.classList.remove('hidden');
+    try {
+        const data = await loadDocumentation();
+        if (mode !== 'functions' || quizMode !== 'definition' || history[historyIndex] !== slug) return;
+        elements.questionDefinition.textContent = definitionWithoutFunctionName(data.short_description, slug);
+        elements.questionDefinition.classList.remove('hidden');
+    } catch (error) {
+        if (mode !== 'functions' || quizMode !== 'definition' || history[historyIndex] !== slug) return;
+        elements.error.textContent = error.message; elements.error.classList.remove('hidden');
+    } finally {
+        if (mode === 'functions' && quizMode === 'definition' && history[historyIndex] === slug) elements.loading.classList.add('hidden');
+    }
 }
 
 async function loadDocumentation() {
@@ -160,7 +186,13 @@ async function reveal() {
     try {
         const data = await loadDocumentation();
         if (mode === 'functions') {
-            elements.answer.innerHTML = data.summary; elements.source.href = data.source; elements.source.textContent = 'Открыть на php.net ↗';
+            if (quizMode === 'definition') {
+                const name = document.createElement('strong');
+                name.textContent = `${history[historyIndex]}()`; elements.answer.replaceChildren(name);
+            } else {
+                elements.answer.innerHTML = data.summary;
+            }
+            elements.source.href = data.source; elements.source.textContent = 'Открыть на php.net ↗';
         } else {
             const definition = document.createElement('strong'), description = document.createElement('p');
             definition.textContent = data.definition; description.textContent = data.short_description; elements.answer.replaceChildren(definition, description);
@@ -192,6 +224,14 @@ function setMode(nextMode) {
     refillCategories(); history = []; historyIndex = -1; renderCategoryStatistics(); showRandomItem();
 }
 
+function setQuizMode(nextQuizMode) {
+    if (quizMode === nextQuizMode) return;
+    quizMode = nextQuizMode;
+    elements.quizByName.classList.toggle('active', quizMode === 'name'); elements.quizByDefinition.classList.toggle('active', quizMode === 'definition');
+    elements.quizByName.setAttribute('aria-pressed', String(quizMode === 'name')); elements.quizByDefinition.setAttribute('aria-pressed', String(quizMode === 'definition'));
+    renderItem();
+}
+
 async function runSandbox() {
     elements.sandboxRun.disabled = true; elements.sandboxStatus.textContent = 'Создаю изолированный контейнер…';
     elements.sandboxError.classList.add('hidden'); elements.sandboxResult.classList.add('hidden');
@@ -220,6 +260,7 @@ elements.previous.addEventListener('click', () => { if (historyIndex > 0) { hist
 elements.reveal.addEventListener('click', reveal); elements.showFull.addEventListener('click', showFull);
 elements.category.addEventListener('change', () => { history = []; historyIndex = -1; showRandomItem(); });
 elements.functionsMode.addEventListener('click', () => setMode('functions')); elements.conceptsMode.addEventListener('click', () => setMode('concepts'));
+elements.quizByName.addEventListener('click', () => setQuizMode('name')); elements.quizByDefinition.addEventListener('click', () => setQuizMode('definition'));
 elements.sandboxMode.addEventListener('click', () => setMode('sandbox')); elements.sandboxRun.addEventListener('click', runSandbox);
 document.addEventListener('keydown', (event) => {
     if (mode === 'sandbox' && event.ctrlKey && event.key === 'Enter') { event.preventDefault(); runSandbox(); return; }
