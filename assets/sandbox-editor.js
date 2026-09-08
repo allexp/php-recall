@@ -22,14 +22,22 @@ const phpHighlightStyle = HighlightStyle.define([
 ]);
 
 const textarea = document.querySelector('#sandbox-code');
+const storageKey = 'php_recall_sandbox_code';
 
 if (textarea) {
+    let initialCode = textarea.value;
+    try {
+        initialCode = localStorage.getItem(storageKey) ?? initialCode;
+    } catch {
+        // Редактор продолжает работать, если браузер запретил локальное хранилище.
+    }
+
     const runCode = () => {
         document.querySelector('#sandbox-run')?.click();
         return true;
     };
     const state = EditorState.create({
-        doc: textarea.value,
+        doc: initialCode,
         extensions: [
             lineNumbers(), highlightActiveLineGutter(), drawSelection(), highlightActiveLine(),
             indentOnInput(), bracketMatching(), closeBrackets(), syntaxHighlighting(phpHighlightStyle), php(),
@@ -40,6 +48,14 @@ if (textarea) {
                 ...closeBracketsKeymap,
                 ...defaultKeymap,
             ]),
+            EditorView.updateListener.of((update) => {
+                if (!update.docChanged) return;
+                try {
+                    localStorage.setItem(storageKey, update.state.doc.toString());
+                } catch {
+                    // Ошибка localStorage не должна мешать вводу и запуску кода.
+                }
+            }),
             EditorView.theme({
                 '&': {height: '100%', color: '#dce2e8', backgroundColor: '#0d1014'},
                 '.cm-content': {caretColor: '#a8ff78', padding: '16px 0'},
