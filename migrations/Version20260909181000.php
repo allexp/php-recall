@@ -2,7 +2,115 @@
 
 declare(strict_types=1);
 
-$solidExample = <<<'PHP'
+namespace DoctrineMigrations;
+
+use Doctrine\DBAL\Schema\Schema;
+use Doctrine\Migrations\AbstractMigration;
+
+/** Переносит каталог концепций разработки в базу учебных материалов. */
+final class Version20260909181000 extends AbstractMigration
+{
+    public function getDescription(): string
+    {
+        return 'Добавляет учебные материалы по концепциям разработки';
+    }
+
+    public function up(Schema $schema): void
+    {
+        $this->addSql("INSERT INTO material_types (code, title) VALUES ('concept', 'Концепции разработки') ON CONFLICT(code) DO UPDATE SET title = excluded.title");
+
+        $categoryPositions = [];
+        foreach ($this->concepts() as $position => $item) {
+            $category = $item['category'];
+            $categoryPositions[$category['code']] ??= count($categoryPositions);
+            $this->addSql(
+                "INSERT INTO categories (type_id, code, title, position) VALUES ((SELECT id FROM material_types WHERE code = 'concept'), :code, :title, :position) ON CONFLICT(type_id, code) DO UPDATE SET title = excluded.title, position = excluded.position",
+                [
+                    'code' => $category['code'],
+                    'title' => $category['title'],
+                    'position' => $categoryPositions[$category['code']],
+                ],
+            );
+
+            $material = $item['material'];
+            $this->addSql(
+                "INSERT INTO materials (type_id, category_id, title, slug, definition, short_description, full_description, content_format, source_url, position, created_at, updated_at)
+                 VALUES ((SELECT id FROM material_types WHERE code = 'concept'), (SELECT categories.id FROM categories JOIN material_types ON material_types.id = categories.type_id WHERE material_types.code = 'concept' AND categories.code = :category), :title, :slug, :definition, :short_description, :full_description, :content_format, :source_url, :position, :created_at, :updated_at)
+                 ON CONFLICT(type_id, slug) DO UPDATE SET category_id = excluded.category_id, title = excluded.title, definition = excluded.definition, short_description = excluded.short_description, full_description = excluded.full_description, content_format = excluded.content_format, source_url = excluded.source_url, position = excluded.position, updated_at = excluded.updated_at",
+                [
+                    'category' => $category['code'],
+                    'title' => $material['title'],
+                    'slug' => $material['slug'],
+                    'definition' => $material['definition'],
+                    'short_description' => $material['short_description'],
+                    'full_description' => $material['full_description'],
+                    'content_format' => $material['content_format'] ?? 'html',
+                    'source_url' => $material['source_url'] ?? null,
+                    'position' => $position,
+                    'created_at' => '2026-09-09T18:10:00+03:00',
+                    'updated_at' => '2026-09-09T18:10:00+03:00',
+                ],
+            );
+
+            $materialId = "(SELECT materials.id FROM materials JOIN material_types ON material_types.id = materials.type_id WHERE material_types.code = 'concept' AND materials.slug = :slug)";
+            $this->addSql("DELETE FROM code_examples WHERE material_id = $materialId", ['slug' => $material['slug']]);
+            $this->addSql("DELETE FROM material_sections WHERE material_id = $materialId", ['slug' => $material['slug']]);
+
+            foreach ($item['examples'] ?? [] as $examplePosition => $example) {
+                $this->addSql(
+                    "INSERT INTO code_examples (material_id, title, language, code, position) VALUES ($materialId, :title, :language, :code, :position)",
+                    [
+                        'slug' => $material['slug'],
+                        'title' => $example['title'] ?? '',
+                        'language' => $example['language'],
+                        'code' => $example['code'],
+                        'position' => $examplePosition,
+                    ],
+                );
+            }
+
+            foreach ($item['sections'] ?? [] as $sectionPosition => $section) {
+                $this->addSql(
+                    "INSERT INTO material_sections (material_id, title, slug, description, position) VALUES ($materialId, :title, :section_slug, :description, :position)",
+                    [
+                        'slug' => $material['slug'],
+                        'title' => $section['title'],
+                        'section_slug' => $section['slug'],
+                        'description' => $section['description'],
+                        'position' => $sectionPosition,
+                    ],
+                );
+                foreach ($section['examples'] ?? [] as $examplePosition => $example) {
+                    $this->addSql(
+                        "INSERT INTO code_examples (material_id, section_id, title, language, code, position)
+                         VALUES ($materialId, (SELECT material_sections.id FROM material_sections WHERE material_id = $materialId AND material_sections.slug = :section_slug), :title, :language, :code, :position)",
+                        [
+                            'slug' => $material['slug'],
+                            'section_slug' => $section['slug'],
+                            'title' => $example['title'] ?? '',
+                            'language' => $example['language'],
+                            'code' => $example['code'],
+                            'position' => $examplePosition,
+                        ],
+                    );
+                }
+            }
+        }
+
+        $this->addSql("DELETE FROM materials WHERE type_id = (SELECT id FROM material_types WHERE code = 'concept') AND slug = 'oop-principles'");
+    }
+
+    public function down(Schema $schema): void
+    {
+        $this->addSql("DELETE FROM materials WHERE type_id = (SELECT id FROM material_types WHERE code = 'concept')");
+        $this->addSql("DELETE FROM categories WHERE type_id = (SELECT id FROM material_types WHERE code = 'concept')");
+        $this->addSql("DELETE FROM material_types WHERE code = 'concept'");
+    }
+
+    /** Возвращает материалы по концепциям разработки. */
+    private function concepts(): array
+    {
+        $solidExample = <<<'PHP'
 interface ReportExporter
 {
     public function export(Report $report): string;
@@ -17,7 +125,7 @@ final class PdfExporter implements ReportExporter
 }
 PHP;
 
-return [
+        return [
     [
         'category' => ['code' => 'principles', 'title' => 'Принципы проектирования'],
         'material' => [
@@ -101,4 +209,6 @@ return [
             ['title' => 'Поведенческие', 'slug' => 'behavioral', 'description' => '<p>Strategy, Observer, Command, State, Template Method и другие шаблоны взаимодействия.</p>'],
         ],
     ],
-];
+        ];
+    }
+}

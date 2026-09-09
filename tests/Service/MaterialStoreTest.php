@@ -24,15 +24,25 @@ final class MaterialStoreTest extends TestCase
         }
     }
 
-    public function testSynchronisesFunctionCatalogWithoutDuplicates(): void
+    public function testReadsFunctionCatalogWithoutDuplicates(): void
     {
         $store = new MaterialStore($this->databaseFile);
         $catalog = [
             'arrays' => ['title' => 'Массивы', 'functions' => ['array_map', 'array_filter']],
         ];
 
-        $store->synchroniseFunctionCatalog($catalog);
-        $store->synchroniseFunctionCatalog($catalog);
+        foreach ($catalog['arrays']['functions'] as $position => $function) {
+            $material = [
+                'title' => $function,
+                'slug' => $function,
+                'definition' => '',
+                'short_description' => '',
+                'full_description' => '',
+                'position' => $position,
+            ];
+            $store->saveMaterial('function', 'PHP-функции', 'arrays', 'Массивы', $material);
+            $store->saveMaterial('function', 'PHP-функции', 'arrays', 'Массивы', $material);
+        }
 
         self::assertSame($catalog, $store->functionCatalog());
         self::assertTrue($store->containsFunction('array_map'));
@@ -42,8 +52,12 @@ final class MaterialStoreTest extends TestCase
     public function testStoresFunctionDocumentationInSeparateFields(): void
     {
         $store = new MaterialStore($this->databaseFile);
-        $store->synchroniseFunctionCatalog([
-            'arrays' => ['title' => 'Массивы', 'functions' => ['array_map']],
+        $store->saveMaterial('function', 'PHP-функции', 'arrays', 'Массивы', [
+            'title' => 'array_map',
+            'slug' => 'array_map',
+            'definition' => '',
+            'short_description' => '',
+            'full_description' => '',
         ]);
 
         $store->saveFunctionDocumentation(

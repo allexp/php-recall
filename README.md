@@ -43,7 +43,7 @@ npm install
 npm run build
 ```
 
-Каталог функций автоматически синхронизируется с SQLite при запуске. Чтобы заранее загрузить документацию всего каталога из PHP Manual, выполните:
+Каталог функций, концепции и практические задачи добавляются в SQLite миграциями. Чтобы загрузить документацию всего каталога из PHP Manual, выполните:
 
 ```bash
 docker compose exec app php bin/console app:import-function-documentation

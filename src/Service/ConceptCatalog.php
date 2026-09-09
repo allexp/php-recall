@@ -4,31 +4,11 @@ declare(strict_types=1);
 
 namespace App\Service;
 
-/** Наполняет и предоставляет каталог концепций разработки. */
+/** Предоставляет каталог концепций разработки. */
 final class ConceptCatalog
 {
-    public function __construct(
-        private readonly MaterialStore $materials,
-        string $catalogFile,
-    ) {
-        /** @var list<array<string, mixed>> $catalog */
-        $catalog = require $catalogFile;
-        foreach ($catalog as $position => $item) {
-            $material = $item['material'];
-            $material['position'] = $position;
-            $materialId = $this->materials->saveMaterial(
-                'concept',
-                'Концепции разработки',
-                $item['category']['code'],
-                $item['category']['title'],
-                $material,
-            );
-            $this->materials->replaceCodeExamples($materialId, $item['examples'] ?? []);
-            $this->materials->replaceSections($materialId, $item['sections'] ?? []);
-        }
-
-        // Удаляем прежнюю объединённую карточку после разделения принципов ООП.
-        $this->materials->deleteMaterial('concept', 'oop-principles');
+    public function __construct(private readonly MaterialStore $materials)
+    {
     }
 
     /** Возвращает сгруппированный список концепций. */

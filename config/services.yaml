@@ -11,10 +11,6 @@ services:
     App\:
         resource: '../src/'
 
-    App\Service\FunctionCatalog:
-        arguments:
-            $catalogFile: '%kernel.project_dir%/config/catalog.php'
-
     App\Service\MaterialStore:
         arguments:
             $databaseFile: '%app.material_database%'
@@ -22,11 +18,6 @@ services:
     App\Service\TaskStore:
         arguments:
             $databaseFile: '%app.material_database%'
-            $migrationFile: '%kernel.project_dir%/data/tasks.sql'
-
-    App\Service\ConceptCatalog:
-        arguments:
-            $catalogFile: '%kernel.project_dir%/config/concepts.php'
 
     App\Service\UserStore:
         arguments:

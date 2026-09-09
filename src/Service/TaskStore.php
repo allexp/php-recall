@@ -5,17 +5,14 @@ declare(strict_types=1);
 namespace App\Service;
 
 use PDO;
-use RuntimeException;
 
 /** Хранилище практических задач и вариантов решений. */
 final class TaskStore
 {
     private ?PDO $connection = null;
 
-    public function __construct(
-        private readonly string $databaseFile,
-        private readonly string $migrationFile,
-    ) {
+    public function __construct(private readonly string $databaseFile)
+    {
     }
 
     /**
@@ -68,22 +65,6 @@ final class TaskStore
                 PDO::ATTR_STRINGIFY_FETCHES => false,
             ],
         );
-        $this->migrate($this->connection);
-
         return $this->connection;
-    }
-
-    private function migrate(PDO $connection): void
-    {
-        $migration = file_get_contents($this->migrationFile);
-
-        if (!is_string($migration)) {
-            throw new RuntimeException(sprintf(
-                'Не удалось прочитать миграцию задач: %s',
-                $this->migrationFile,
-            ));
-        }
-
-        $connection->exec($migration);
     }
 }

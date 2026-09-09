@@ -5,18 +5,32 @@ declare(strict_types=1);
 namespace App\Tests\Service;
 
 use App\Service\TaskStore;
+use PDO;
 use PHPUnit\Framework\TestCase;
 
 /** Проверяет хранилище практических задач. */
 final class TaskStoreTest extends TestCase
 {
-    private const MIGRATION_FILE = __DIR__ . '/../../data/tasks.sql';
-
     public function testReturnsTaskAndKeepsSolutionSeparate(): void
     {
         $databaseFile = sys_get_temp_dir() . '/php-recall-tasks-' . bin2hex(random_bytes(8)) . '.sqlite';
         try {
-            $store = new TaskStore($databaseFile, self::MIGRATION_FILE);
+            $connection = new PDO('sqlite:'.$databaseFile);
+            $connection->exec(
+                "CREATE TABLE tasks (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    difficulty TEXT NOT NULL,
+                    title TEXT NOT NULL,
+                    description TEXT NOT NULL,
+                    starter_code TEXT NOT NULL,
+                    solution_code TEXT NOT NULL
+                );
+                INSERT INTO tasks (difficulty, title, description, starter_code, solution_code)
+                VALUES ('easy', 'Тестовая задача', 'Описание', '<?php', '<?php echo 1;')",
+            );
+            unset($connection);
+
+            $store = new TaskStore($databaseFile);
             $task = $store->random('easy');
 
             self::assertNotNull($task);

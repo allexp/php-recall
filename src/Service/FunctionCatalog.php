@@ -4,17 +4,11 @@ declare(strict_types=1);
 
 namespace App\Service;
 
-/** Предоставляет типизированный доступ к настроенному каталогу функций. */
+/** Предоставляет типизированный доступ к каталогу функций в базе данных. */
 final class FunctionCatalog
 {
-    /** Синхронизирует конфигурацию каталога с базой материалов. */
-    public function __construct(
-        private readonly MaterialStore $materials,
-        string $catalogFile,
-    ) {
-        /** @var array<string, array{title: string, functions: list<string>}> $catalog */
-        $catalog = require $catalogFile;
-        $this->materials->synchroniseFunctionCatalog($catalog);
+    public function __construct(private readonly MaterialStore $materials)
+    {
     }
 
     /**

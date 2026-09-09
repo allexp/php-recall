@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Command;
 
-use App\Service\FunctionCatalog;
 use App\Service\ManualService;
 use App\Service\MaterialStore;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -20,7 +19,6 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 final class ImportFunctionDocumentationCommand extends Command
 {
     public function __construct(
-        private readonly FunctionCatalog $catalog,
         private readonly MaterialStore $materials,
         private readonly ManualService $manual,
     ) {
@@ -37,8 +35,6 @@ final class ImportFunctionDocumentationCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
-        // Обращение к каталогу гарантирует синхронизацию config/catalog.php с БД.
-        $this->catalog->all();
         $requested = $input->getArgument('functions');
         $functions = $requested === [] ? $this->materials->functionNames() : array_values(array_unique($requested));
         $refresh = (bool) $input->getOption('refresh');

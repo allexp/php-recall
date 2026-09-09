@@ -1,4 +1,68 @@
-BEGIN TRANSACTION;
+<?php
+
+declare(strict_types=1);
+
+namespace DoctrineMigrations;
+
+use Doctrine\DBAL\Schema\Schema;
+use Doctrine\DBAL\Platforms\SQLitePlatform;
+use Doctrine\Migrations\AbstractMigration;
+
+/** Создаёт таблицу практических задач и наполняет её исходными заданиями. */
+final class Version20260909182000 extends AbstractMigration
+{
+    public function getDescription(): string
+    {
+        return 'Добавляет практические задачи всех уровней сложности';
+    }
+
+    public function up(Schema $schema): void
+    {
+        $this->abortIf(
+            !$this->connection->getDatabasePlatform() instanceof SQLitePlatform,
+            'Миграция поддерживает только SQLite.',
+        );
+
+        $sql = file_get_contents(__FILE__, false, null, __COMPILER_HALT_OFFSET__);
+        if (!is_string($sql)) {
+            throw new \RuntimeException('Не удалось прочитать SQL-содержимое миграции задач.');
+        }
+
+        $source = new \PDO('sqlite::memory:');
+        if ($source->exec($sql) === false) {
+            throw new \RuntimeException('Не удалось выполнить SQL-содержимое миграции задач.');
+        }
+
+        $this->addSql(
+            "CREATE TABLE IF NOT EXISTS tasks (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                difficulty TEXT NOT NULL CHECK (difficulty IN ('easy', 'medium', 'hard')),
+                title TEXT NOT NULL,
+                description TEXT NOT NULL,
+                starter_code TEXT NOT NULL,
+                solution_code TEXT NOT NULL,
+                UNIQUE (difficulty, title)
+            )",
+        );
+        $tasks = $source->query(
+            'SELECT difficulty, title, description, starter_code, solution_code FROM tasks ORDER BY id',
+        )->fetchAll(\PDO::FETCH_ASSOC);
+        foreach ($tasks as $task) {
+            $this->addSql(
+                'INSERT OR IGNORE INTO tasks (difficulty, title, description, starter_code, solution_code)
+                 VALUES (:difficulty, :title, :description, :starter_code, :solution_code)',
+                $task,
+            );
+        }
+    }
+
+    public function down(Schema $schema): void
+    {
+        $this->addSql('DROP TABLE IF EXISTS tasks');
+    }
+}
+
+__halt_compiler();
 
 CREATE TABLE IF NOT EXISTS tasks (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -714,4 +778,3 @@ unset($session);
 
 print_r($sessions);');
 
-COMMIT;
