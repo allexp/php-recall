@@ -52,6 +52,9 @@ docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" build --pull
 echo "Запускаю обновлённый контейнер..."
 docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d --remove-orphans
 
+echo "Применяю миграции базы данных..."
+docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" exec -T app php bin/console doctrine:migrations:migrate --no-interaction
+
 echo "Проверяю состояние сервиса..."
 ATTEMPT=1
 MAX_ATTEMPTS=15

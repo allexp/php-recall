@@ -3,8 +3,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Тренажёр для изучения функций PHP">
-    <title>PHP Recall — тренажёр функций</title>
+    <meta name="description" content="Тренажёр для изучения PHP, Laravel и концепций разработки">
+    <title>PHP Recall — тренажёр PHP и Laravel</title>
     <link rel="icon" type="image/png" href="favicon.png">
     <link rel="shortcut icon" type="image/png" href="favicon.png">
     <link rel="stylesheet" href="app.css">
@@ -18,6 +18,7 @@
         <nav class="content-switch" aria-label="Раздел обучения">
             <button class="switch-button active" id="functions-mode" type="button">Функции</button>
             <button class="switch-button" id="concepts-mode" type="button">Концепции</button>
+            <button class="switch-button" id="frameworks-mode" type="button">Фреймворки</button>
             <button class="switch-button" id="tasks-mode" type="button">Задачи</button>
             <button class="switch-button" id="sandbox-mode" type="button">Песочница</button>
         </nav>
@@ -73,7 +74,7 @@
                     <button class="known" id="known" type="button">Знаю</button>
                 </div>
 
-                <div class="loading hidden" id="loading">Загружаю документацию…</div>
+                <div class="loading hidden" id="loading">Загружаю материал…</div>
                 <div class="error hidden" id="error"></div>
                 <section class="answer hidden" id="answer"></section>
                 <section class="manual hidden" id="manual"></section>
@@ -149,7 +150,7 @@ print_r($squares);</textarea>
                 <aside class="category-statistics hidden" id="category-statistics" aria-labelledby="category-statistics-title">
                     <div>
                         <div class="statistics-title" id="category-statistics-title">Статистика по категориям</div>
-                        <div class="statistics-hint">Функции, которые вы отметили как известные</div>
+                        <div class="statistics-hint">Материалы, которые вы отметили как известные</div>
                     </div>
                     <dl id="category-statistics-list"></dl>
                 </aside>

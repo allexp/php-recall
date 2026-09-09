@@ -105,15 +105,29 @@ final class MaterialStore
     /** Возвращает каталог концепций, сгруппированный по категориям. */
     public function conceptCatalog(): array
     {
-        $rows = $this->connection()->query(
+        return $this->materialCatalog('concept');
+    }
+
+    /** Возвращает каталог фреймворков, сгруппированный по категориям. */
+    public function frameworkCatalog(): array
+    {
+        return $this->materialCatalog('framework');
+    }
+
+    /** Возвращает каталог материалов указанного типа, сгруппированный по категориям. */
+    private function materialCatalog(string $typeCode): array
+    {
+        $statement = $this->connection()->prepare(
             "SELECT categories.code, categories.title AS category_title,
                     materials.title, materials.slug, materials.short_description
              FROM materials
              JOIN material_types ON material_types.id = materials.type_id
              JOIN categories ON categories.id = materials.category_id
-             WHERE material_types.code = 'concept'
+             WHERE material_types.code = :type_code
              ORDER BY categories.position, categories.id, materials.position, materials.id"
-        )->fetchAll();
+        );
+        $statement->execute(['type_code' => $typeCode]);
+        $rows = $statement->fetchAll();
 
         $catalog = [];
         foreach ($rows as $row) {

@@ -7,6 +7,7 @@ namespace App\Controller;
 use App\Service\CsrfTokens;
 use App\Service\ConceptCatalog;
 use App\Service\FunctionCatalog;
+use App\Service\FrameworkCatalog;
 use App\Service\ManualService;
 use App\Service\MaterialStore;
 use App\Service\SandboxClient;
@@ -21,7 +22,7 @@ use Symfony\Component\Routing\Attribute\Route;
 /** Управляет главной страницей и публичными API тренажёра. */
 final class AppController extends AbstractController
 {
-    /** Отображает интерфейс изучения функций PHP. */
+    /** Отображает учебный интерфейс приложения. */
     #[Route('/', name: 'app_home', methods: ['GET'])]
     public function index(Request $request, CsrfTokens $csrf): Response
     {
@@ -76,6 +77,13 @@ final class AppController extends AbstractController
         return $this->json($catalog->all());
     }
 
+    /** Возвращает категории и карточки по фреймворкам. */
+    #[Route('/api/frameworks', name: 'api_frameworks', methods: ['GET'])]
+    public function frameworks(FrameworkCatalog $catalog): JsonResponse
+    {
+        return $this->json($catalog->all());
+    }
+
     /** Возвращает одну случайную задачу выбранной сложности. */
     #[Route('/api/tasks/{difficulty}', name: 'api_task', requirements: ['difficulty' => 'easy|medium|hard'], methods: ['GET'])]
     public function task(string $difficulty, TaskStore $tasks): JsonResponse
@@ -99,6 +107,26 @@ final class AppController extends AbstractController
         $material = $catalog->get($slug);
         if ($material === null) {
             return $this->json(['error' => 'Концепция не найдена.'], Response::HTTP_NOT_FOUND);
+        }
+
+        return $this->json([
+            'title' => $material['title'],
+            'definition' => $material['definition'],
+            'short_description' => $material['short_description'],
+            'full_description' => $material['full_description'],
+            'source_url' => $material['source_url'],
+            'code_examples' => $material['code_examples'],
+            'sections' => $material['sections'],
+        ]);
+    }
+
+    /** Возвращает полное объяснение карточки фреймворка. */
+    #[Route('/api/frameworks/{slug}', name: 'api_framework', requirements: ['slug' => '[a-z0-9-]+'], methods: ['GET'])]
+    public function framework(string $slug, FrameworkCatalog $catalog): JsonResponse
+    {
+        $material = $catalog->get($slug);
+        if ($material === null) {
+            return $this->json(['error' => 'Карточка фреймворка не найдена.'], Response::HTTP_NOT_FOUND);
         }
 
         return $this->json([
@@ -182,6 +210,7 @@ final class AppController extends AbstractController
         return $this->json([
             'functions' => $users->knownFunctions((int) $user['id']),
             'concepts' => $users->knownConcepts((int) $user['id']),
+            'frameworks' => $users->knownFrameworks((int) $user['id']),
         ]);
     }
 
@@ -233,5 +262,30 @@ final class AppController extends AbstractController
         $users->setConceptKnown((int) $user['id'], $slug, $request->isMethod('PUT'));
 
         return $this->json(['concepts' => $users->knownConcepts((int) $user['id'])]);
+    }
+
+    /** Изменяет отметку «знаю» для карточки фреймворка. */
+    #[Route('/api/knowledge/framework/{slug}', name: 'api_framework_knowledge_update', requirements: ['slug' => '[a-z0-9-]+'], methods: ['PUT', 'DELETE'])]
+    public function updateFrameworkKnowledge(
+        string $slug,
+        Request $request,
+        FrameworkCatalog $catalog,
+        UserStore $users,
+        CsrfTokens $csrf,
+    ): JsonResponse {
+        $user = $request->getSession()->get('user');
+        if (!is_array($user) || !isset($user['id'])) {
+            return $this->json(['error' => 'Необходима авторизация.'], Response::HTTP_UNAUTHORIZED);
+        }
+        if (!$csrf->isValid($request, 'knowledge', (string) $request->headers->get('X-CSRF-Token'))) {
+            return $this->json(['error' => 'Сессия устарела. Обновите страницу.'], Response::HTTP_FORBIDDEN);
+        }
+        if ($catalog->get($slug) === null) {
+            return $this->json(['error' => 'Карточка фреймворка не найдена.'], Response::HTTP_NOT_FOUND);
+        }
+
+        $users->setFrameworkKnown((int) $user['id'], $slug, $request->isMethod('PUT'));
+
+        return $this->json(['frameworks' => $users->knownFrameworks((int) $user['id'])]);
     }
 }

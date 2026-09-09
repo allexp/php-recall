@@ -4,6 +4,8 @@
     "require": {
         "php": ">=8.3",
         "ext-dom": "*",
+        "doctrine/doctrine-bundle": "^2.19",
+        "doctrine/doctrine-migrations-bundle": "^3.7",
         "symfony/asset": "7.4.*",
         "symfony/cache": "7.4.*",
         "symfony/console": "7.4.*",

@@ -108,6 +108,40 @@ final class UserStore
         $statement->execute(['user_id' => $userId, 'concept_slug' => $slug]);
     }
 
+    /** Возвращает список карточек фреймворков, которые пользователь отметил как известные. */
+    public function knownFrameworks(int $userId): array
+    {
+        $statement = $this->connection()->prepare(
+            'SELECT framework_slug FROM known_frameworks WHERE user_id = :user_id ORDER BY framework_slug'
+        );
+        $statement->execute(['user_id' => $userId]);
+
+        return $statement->fetchAll(PDO::FETCH_COLUMN);
+    }
+
+    /** Добавляет или удаляет карточку фреймворка из списка известных пользователю. */
+    public function setFrameworkKnown(int $userId, string $slug, bool $known): void
+    {
+        if ($known) {
+            $statement = $this->connection()->prepare(
+                'INSERT OR IGNORE INTO known_frameworks (user_id, framework_slug, created_at)
+                 VALUES (:user_id, :framework_slug, :created_at)'
+            );
+            $statement->execute([
+                'user_id' => $userId,
+                'framework_slug' => $slug,
+                'created_at' => (new \DateTimeImmutable())->format(DATE_ATOM),
+            ]);
+
+            return;
+        }
+
+        $statement = $this->connection()->prepare(
+            'DELETE FROM known_frameworks WHERE user_id = :user_id AND framework_slug = :framework_slug'
+        );
+        $statement->execute(['user_id' => $userId, 'framework_slug' => $slug]);
+    }
+
     private function normaliseEmail(string $email): string
     {
         return mb_strtolower(trim($email));
@@ -152,6 +186,15 @@ final class UserStore
                 concept_slug TEXT NOT NULL,
                 created_at TEXT NOT NULL,
                 PRIMARY KEY (user_id, concept_slug),
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            )'
+        );
+        $this->connection->exec(
+            'CREATE TABLE IF NOT EXISTS known_frameworks (
+                user_id INTEGER NOT NULL,
+                framework_slug TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                PRIMARY KEY (user_id, framework_slug),
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
             )'
         );

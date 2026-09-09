@@ -10,13 +10,15 @@ async function jsonRequest(path, options, fallbackMessage) {
 
 export async function loadCatalogs() {
     // Независимые каталоги загружаются одновременно, чтобы не задерживать запуск приложения.
-    const [functionsResponse, conceptsResponse] = await Promise.all([
+    const [functionsResponse, conceptsResponse, frameworksResponse] = await Promise.all([
         fetch('api/catalog'),
         fetch('api/concepts'),
+        fetch('api/frameworks'),
     ]);
-    if (!functionsResponse.ok || !conceptsResponse.ok) throw new Error('Не удалось загрузить каталоги.');
+    if (!functionsResponse.ok || !conceptsResponse.ok || !frameworksResponse.ok) throw new Error('Не удалось загрузить каталоги.');
     state.functionCatalog = await functionsResponse.json();
     state.conceptCatalog = await conceptsResponse.json();
+    state.frameworkCatalog = await frameworksResponse.json();
 }
 
 export async function loadKnowledge() {
@@ -24,13 +26,13 @@ export async function loadKnowledge() {
     const data = await jsonRequest('api/knowledge', undefined, 'Не удалось загрузить прогресс пользователя.');
     state.knownItems.functions = new Set(data.functions ?? []);
     state.knownItems.concepts = new Set(data.concepts ?? []);
+    state.knownItems.frameworks = new Set(data.frameworks ?? []);
 }
 
 export async function setKnowledge(slug, isKnown, mode) {
     if (!state.isAuthenticated) return;
-    const path = mode === 'functions'
-        ? `api/knowledge/${encodeURIComponent(slug)}`
-        : `api/knowledge/concept/${encodeURIComponent(slug)}`;
+    const prefix = { functions: '', concepts: 'concept/', frameworks: 'framework/' }[mode];
+    const path = `api/knowledge/${prefix}${encodeURIComponent(slug)}`;
     const data = await jsonRequest(path, {
         method: isKnown ? 'PUT' : 'DELETE',
         headers: { 'X-CSRF-Token': document.body.dataset.knowledgeToken },
@@ -43,9 +45,8 @@ export async function loadDocumentation(slug, mode) {
     // Ключ включает режим, потому что функция и концепция теоретически могут иметь одинаковый slug.
     const key = `${mode}:${slug}`;
     if (state.documentation.has(key)) return state.documentation.get(key);
-    const path = mode === 'functions'
-        ? `api/manual/${encodeURIComponent(slug)}`
-        : `api/concepts/${encodeURIComponent(slug)}`;
+    const prefix = { functions: 'manual', concepts: 'concepts', frameworks: 'frameworks' }[mode];
+    const path = `api/${prefix}/${encodeURIComponent(slug)}`;
     const data = await jsonRequest(path, undefined, 'Не удалось загрузить материал.');
     state.documentation.set(key, data);
     return data;

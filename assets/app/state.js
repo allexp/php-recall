@@ -2,6 +2,7 @@
 export const state = {
     functionCatalog: {},
     conceptCatalog: {},
+    frameworkCatalog: {},
     mode: 'functions',
     quizMode: 'name',
     history: [],
@@ -10,7 +11,7 @@ export const state = {
     shownFunctions: new Set(),
     documentation: new Map(),
     isAuthenticated: document.body.dataset.authenticated === '1',
-    knownItems: { functions: new Set(), concepts: new Set() },
+    knownItems: { functions: new Set(), concepts: new Set(), frameworks: new Set() },
 };
 
 export const counters = {
@@ -19,7 +20,8 @@ export const counters = {
 };
 
 export function categories() {
-    return state.mode === 'functions' ? state.functionCatalog : state.conceptCatalog;
+    if (state.mode === 'functions') return state.functionCatalog;
+    return state.mode === 'concepts' ? state.conceptCatalog : state.frameworkCatalog;
 }
 
 export function categoryItems(category) {
@@ -37,11 +39,11 @@ export function currentPool(selectedCategory) {
 
 export function categoryTitle(slug) {
     return Object.values(categories()).find((category) => categoryItems(category).includes(slug))?.title
-        ?? (state.mode === 'functions' ? 'Функция PHP' : 'Концепция разработки');
+        ?? ({ functions: 'Функция PHP', concepts: 'Концепция разработки', frameworks: 'Фреймворк' }[state.mode] ?? 'Материал');
 }
 
-export function conceptSummary(slug) {
-    return Object.values(state.conceptCatalog)
+export function materialSummary(slug) {
+    return Object.values(categories())
         .flatMap((category) => category.materials)
         .find((item) => item.slug === slug);
 }

@@ -1,6 +1,6 @@
 import { loadDocumentation } from './api.js';
 import { elements } from './dom.js';
-import { categoryTitle, conceptSummary, currentPool, state } from './state.js';
+import { categoryTitle, currentPool, materialSummary, state } from './state.js';
 
 function definitionWithoutFunctionName(definition, slug) {
     // В режиме обратного вопроса название функции удаляется только из начала определения.
@@ -22,11 +22,11 @@ export function updateCycleProgress() {
 
 export function renderItem() {
     const slug = state.history[state.historyIndex];
-    const concept = state.mode === 'concepts' ? conceptSummary(slug) : null;
+    const material = state.mode !== 'functions' ? materialSummary(slug) : null;
     const isDefinitionQuiz = state.mode === 'functions' && state.quizMode === 'definition';
     elements.cycleComplete.classList.add('hidden');
     elements.studyContent.classList.remove('hidden');
-    elements.itemName.textContent = isDefinitionQuiz ? '' : (state.mode === 'functions' ? `${slug}()` : concept?.title ?? slug);
+    elements.itemName.textContent = isDefinitionQuiz ? '' : (state.mode === 'functions' ? `${slug}()` : material?.title ?? slug);
     elements.quizMode.classList.toggle('hidden', state.mode !== 'functions');
     elements.itemName.classList.toggle('hidden', isDefinitionQuiz);
     elements.questionDefinition.classList.add('hidden');
@@ -34,9 +34,10 @@ export function renderItem() {
     elements.categoryLabel.textContent = categoryTitle(slug);
     elements.prompt.textContent = state.mode === 'functions'
         ? (isDefinitionQuiz ? 'Вспомните название этой функции.' : 'Вспомните, что делает эта функция.')
-        : 'Вспомните определение и смысл этой концепции.';
+        : (state.mode === 'frameworks' ? 'Сформулируйте ответ своими словами.' : 'Вспомните определение и смысл этой концепции.');
     elements.previous.disabled = state.historyIndex <= 0;
-    elements.progress.textContent = `${currentPool(elements.category.value).length} ${state.mode === 'functions' ? 'функций' : 'концепций'} в подборке`;
+    const itemLabel = { functions: 'функций', concepts: 'концепций', frameworks: 'карточек' }[state.mode];
+    elements.progress.textContent = `${currentPool(elements.category.value).length} ${itemLabel} в подборке`;
     elements.reveal.textContent = 'Показать';
     elements.reveal.classList.remove('hidden');
     elements.known.classList.remove('hidden');
@@ -85,12 +86,12 @@ function appendExamples(container, examples) {
     });
 }
 
-export function renderConceptFull(concept) {
-    elements.manual.innerHTML = concept.full_description;
-    appendExamples(elements.manual, concept.code_examples);
+export function renderMaterialFull(material) {
+    elements.manual.innerHTML = material.full_description;
+    appendExamples(elements.manual, material.code_examples);
     const sections = document.createElement('div');
     sections.className = 'concept-sections';
-    concept.sections.forEach((section) => {
+    material.sections.forEach((section) => {
         const details = document.createElement('details');
         const summary = document.createElement('summary');
         const body = document.createElement('div');

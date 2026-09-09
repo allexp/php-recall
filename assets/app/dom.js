@@ -2,6 +2,7 @@
 export const elements = {
     functionsMode: document.querySelector('#functions-mode'),
     conceptsMode: document.querySelector('#concepts-mode'),
+    frameworksMode: document.querySelector('#frameworks-mode'),
     tasksMode: document.querySelector('#tasks-mode'),
     sandboxMode: document.querySelector('#sandbox-mode'),
     stage: document.querySelector('#stage'),

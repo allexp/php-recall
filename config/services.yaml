@@ -1,5 +1,6 @@
 parameters:
-    app.material_database: '%kernel.project_dir%/data/materials.sqlite'
+    app.default_material_database: '%kernel.project_dir%/data/materials.sqlite'
+    app.material_database: '%env(default:app.default_material_database:MATERIAL_DATABASE)%'
     app.user_database: '%kernel.project_dir%/data/users.sqlite'
 
 services:

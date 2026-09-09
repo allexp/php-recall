@@ -1,16 +1,20 @@
 import { loadDocumentation, setKnowledge } from './api.js';
 import { elements } from './dom.js';
-import { renderConceptFull, renderCycleComplete, renderItem, updateCycleProgress } from './render.js';
+import { renderCycleComplete, renderItem, renderMaterialFull, updateCycleProgress } from './render.js';
 import { incrementCounter, updateStatistics } from './statistics.js';
 import { categories, categoryItems, counters, currentPool, resetHistory, state } from './state.js';
 
 export function refillCategories() {
-    const allTitle = state.mode === 'functions' ? 'Все функции' : 'Все концепции';
+    const allTitle = { functions: 'Все функции', concepts: 'Все концепции', frameworks: 'Все карточки' }[state.mode];
     elements.category.replaceChildren(new Option(allTitle, 'all'));
     Object.entries(categories()).forEach(([key, category]) => {
         elements.category.add(new Option(`${category.title} · ${categoryItems(category).length}`, key));
     });
-    elements.category.setAttribute('aria-label', state.mode === 'functions' ? 'Категория функций' : 'Категория концепций');
+    const categoryLabel = { functions: 'Категория функций', concepts: 'Категория концепций', frameworks: 'Категория фреймворков' }[state.mode];
+    elements.category.setAttribute('aria-label', categoryLabel);
+    const itemLabel = { functions: 'функция', concepts: 'концепция', frameworks: 'карточка фреймворка' }[state.mode];
+    elements.previous.setAttribute('aria-label', `Предыдущая ${itemLabel}`);
+    elements.next.setAttribute('aria-label', `Следующая случайная ${itemLabel}`);
 }
 
 export function showRandomItem() {
@@ -131,7 +135,7 @@ export async function showFull() {
         const data = await loadDocumentation(slug, requestedMode);
         if (state.history[state.historyIndex] !== slug || state.mode !== requestedMode) return;
         if (state.mode === 'functions') elements.manual.innerHTML = data.full;
-        else renderConceptFull(data);
+        else renderMaterialFull(data);
         elements.manual.classList.remove('hidden');
         elements.showFull.classList.add('hidden');
         elements.manual.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -151,6 +155,7 @@ export function setMode(nextMode) {
     state.mode = nextMode;
     elements.functionsMode.classList.toggle('active', state.mode === 'functions');
     elements.conceptsMode.classList.toggle('active', state.mode === 'concepts');
+    elements.frameworksMode.classList.toggle('active', state.mode === 'frameworks');
     elements.tasksMode.classList.toggle('active', state.mode === 'tasks');
     elements.sandboxMode.classList.toggle('active', state.mode === 'sandbox');
     const isSandbox = state.mode === 'sandbox';

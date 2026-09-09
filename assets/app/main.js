@@ -24,6 +24,7 @@ elements.showFull.addEventListener('click', showFull);
 elements.category.addEventListener('change', resetFunctionCycle);
 elements.functionsMode.addEventListener('click', () => setMode('functions'));
 elements.conceptsMode.addEventListener('click', () => setMode('concepts'));
+elements.frameworksMode.addEventListener('click', () => setMode('frameworks'));
 elements.tasksMode.addEventListener('click', () => { setMode('tasks'); showTask(); });
 elements.quizByName.addEventListener('click', () => setQuizMode('name'));
 elements.quizByDefinition.addEventListener('click', () => setQuizMode('definition'));

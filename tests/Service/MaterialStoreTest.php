@@ -111,4 +111,27 @@ final class MaterialStoreTest extends TestCase
         self::assertSame('Пример', $material['sections'][0]['code_examples'][0]['title']);
         self::assertSame([], $material['sections'][1]['code_examples']);
     }
+
+    public function testKeepsFrameworkCatalogSeparateFromConcepts(): void
+    {
+        $store = new MaterialStore($this->databaseFile);
+        $store->saveMaterial('concept', 'Концепции разработки', 'architecture', 'Архитектура', [
+            'title' => 'MVC',
+            'slug' => 'mvc',
+            'definition' => 'Архитектурный шаблон.',
+            'short_description' => 'Разделяет ответственности.',
+            'full_description' => '<p>Описание MVC.</p>',
+        ]);
+        $store->saveMaterial('framework', 'Фреймворки', 'laravel', 'Laravel', [
+            'title' => 'Что такое Service Container?',
+            'slug' => 'service-container',
+            'definition' => 'Контейнер зависимостей.',
+            'short_description' => 'Создаёт объекты приложения.',
+            'full_description' => '<p>Описание контейнера.</p>',
+        ]);
+
+        self::assertSame(['architecture'], array_keys($store->conceptCatalog()));
+        self::assertSame(['laravel'], array_keys($store->frameworkCatalog()));
+        self::assertSame('service-container', $store->frameworkCatalog()['laravel']['materials'][0]['slug']);
+    }
 }

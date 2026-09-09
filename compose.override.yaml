@@ -6,7 +6,7 @@ services:
     volumes:
       - ./bin:/app/bin
       - ./config:/app/config
+      - ./migrations:/app/migrations
       - ./public:/app/public
       - ./src:/app/src
       - ./templates:/app/templates
-
