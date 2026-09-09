@@ -10,11 +10,13 @@ use PHPUnit\Framework\TestCase;
 /** Проверяет хранилище практических задач. */
 final class TaskStoreTest extends TestCase
 {
+    private const MIGRATION_FILE = __DIR__ . '/../../data/tasks.sql';
+
     public function testReturnsTaskAndKeepsSolutionSeparate(): void
     {
-        $databaseFile = sys_get_temp_dir().'/php-recall-tasks-'.bin2hex(random_bytes(8)).'.sqlite';
+        $databaseFile = sys_get_temp_dir() . '/php-recall-tasks-' . bin2hex(random_bytes(8)) . '.sqlite';
         try {
-            $store = new TaskStore($databaseFile);
+            $store = new TaskStore($databaseFile, self::MIGRATION_FILE);
             $task = $store->random('easy');
 
             self::assertNotNull($task);
@@ -24,7 +26,9 @@ final class TaskStoreTest extends TestCase
         } finally {
             unset($store);
             gc_collect_cycles();
-            if (is_file($databaseFile)) unlink($databaseFile);
+            if (is_file($databaseFile)) {
+                unlink($databaseFile);
+            }
         }
     }
 }

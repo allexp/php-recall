@@ -21,6 +21,7 @@ services:
     App\Service\TaskStore:
         arguments:
             $databaseFile: '%app.material_database%'
+            $migrationFile: '%kernel.project_dir%/data/tasks.sql'
 
     App\Service\ConceptCatalog:
         arguments:
