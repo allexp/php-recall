@@ -23,7 +23,7 @@ const phpHighlightStyle = HighlightStyle.define([
 
 const storageKey = 'php_recall_sandbox_code';
 
-function createPhpEditor(selector, runButtonSelector, persist = false) {
+function createPhpEditor(selector, runButtonSelector, persist = false, readOnly = false) {
     const textarea = document.querySelector(selector);
     if (!textarea) return null;
 
@@ -45,6 +45,8 @@ function createPhpEditor(selector, runButtonSelector, persist = false) {
         extensions: [
             lineNumbers(), highlightActiveLineGutter(), drawSelection(), highlightActiveLine(),
             indentOnInput(), bracketMatching(), closeBrackets(), syntaxHighlighting(phpHighlightStyle), php(),
+            EditorState.readOnly.of(readOnly),
+            EditorView.editable.of(!readOnly),
             keymap.of([
                 {key: 'Ctrl-Enter', run: runCode},
                 {key: 'Mod-Enter', run: runCode},
@@ -86,3 +88,4 @@ function createPhpEditor(selector, runButtonSelector, persist = false) {
 
 window.phpSandboxEditor = createPhpEditor('#sandbox-code', '#sandbox-run', true);
 window.phpTaskEditor = createPhpEditor('#task-code', '#task-run');
+window.phpTaskSolutionViewer = createPhpEditor('#task-solution-code', '', false, true);

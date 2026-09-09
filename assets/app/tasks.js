@@ -16,6 +16,7 @@ export async function showTask() {
         else elements.taskCode.value = currentTask.starter_code;
         elements.taskResult.classList.add('hidden');
         elements.taskSolution.classList.add('hidden');
+        window.phpTaskSolutionViewer?.setValue('');
         elements.taskSolutionShow.classList.remove('hidden');
         elements.taskStatus.textContent = 'Готово к решению';
     } catch (error) { showError(error); } finally { setBusy(false); }
@@ -38,7 +39,8 @@ export async function revealTaskSolution() {
     setBusy(true);
     try {
         const data = await loadTaskSolution(currentTask.id);
-        elements.taskSolutionCode.textContent = data.solution;
+        if (window.phpTaskSolutionViewer) window.phpTaskSolutionViewer.setValue(data.solution);
+        else elements.taskSolutionCode.value = data.solution;
         elements.taskSolution.classList.remove('hidden');
         elements.taskSolutionShow.classList.add('hidden');
     } catch (error) { showError(error); } finally { setBusy(false); }

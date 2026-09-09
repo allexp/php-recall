@@ -121,7 +121,10 @@ print_r($squares);</textarea>
                     <span class="sandbox-status" id="task-status"></span>
                 </div>
                 <section class="sandbox-result hidden" id="task-result"><div class="sandbox-result-title">Результат</div><pre><code id="task-output"></code></pre></section>
-                <section class="task-solution hidden" id="task-solution"><div class="sandbox-result-title">Вариант решения</div><pre><code id="task-solution-code"></code></pre></section>
+                <section class="task-solution hidden" id="task-solution">
+                    <div class="sandbox-result-title">Вариант решения</div>
+                    <textarea id="task-solution-code" class="sandbox-editor" readonly spellcheck="false" aria-label="Код готового решения"></textarea>
+                </section>
                 <div class="error hidden" id="task-error"></div>
             </article>
 
