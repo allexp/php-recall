@@ -11,13 +11,9 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 /** Хранит пример исходного кода материала или его раздела. */
 #[ORM\Entity]
-#[ORM\Table(
-    name: 'code_examples',
-    indexes: [
-        new ORM\Index(name: 'idx_code_examples_material', columns: ['material_id', 'position']),
-        new ORM\Index(name: 'idx_code_examples_section', columns: ['section_id', 'position']),
-    ],
-)]
+#[ORM\Table(name: 'code_examples')]
+#[ORM\Index(name: 'idx_code_examples_material', columns: ['material_id', 'position'])]
+#[ORM\Index(name: 'idx_code_examples_section', columns: ['section_id', 'position'])]
 class CodeExample
 {
     #[ORM\Id]

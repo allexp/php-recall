@@ -13,11 +13,9 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 /** Группирует материалы внутри одного системного типа. */
 #[ORM\Entity]
-#[ORM\Table(
-    name: 'categories',
-    uniqueConstraints: [new ORM\UniqueConstraint(name: 'uniq_categories_type_code', columns: ['type_id', 'code'])],
-    indexes: [new ORM\Index(name: 'idx_categories_type', columns: ['type_id', 'position'])],
-)]
+#[ORM\Table(name: 'categories')]
+#[ORM\UniqueConstraint(name: 'uniq_categories_type_code', columns: ['type_id', 'code'])]
+#[ORM\Index(name: 'idx_categories_type', columns: ['type_id', 'position'])]
 #[UniqueEntity(fields: ['type', 'code'], message: 'Категория с таким кодом уже существует для выбранного типа.')]
 class Category
 {

@@ -13,10 +13,8 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 /** Представляет пользователя отдельной административной части сайта. */
 #[ORM\Entity]
-#[ORM\Table(
-    name: 'admin_users',
-    uniqueConstraints: [new ORM\UniqueConstraint(name: 'uniq_admin_users_email', columns: ['email'])],
-)]
+#[ORM\Table(name: 'admin_users')]
+#[ORM\UniqueConstraint(name: 'uniq_admin_users_email', columns: ['email'])]
 #[ORM\HasLifecycleCallbacks]
 #[UniqueEntity(fields: ['email'], message: 'Администратор с таким email уже существует.')]
 class AdminUser implements UserInterface, PasswordAuthenticatedUserInterface

@@ -14,14 +14,10 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 /** Представляет одну учебную карточку в каталоге. */
 #[ORM\Entity]
-#[ORM\Table(
-    name: 'materials',
-    uniqueConstraints: [new ORM\UniqueConstraint(name: 'uniq_materials_type_slug', columns: ['type_id', 'slug'])],
-    indexes: [
-        new ORM\Index(name: 'idx_materials_category', columns: ['category_id']),
-        new ORM\Index(name: 'idx_materials_type_title', columns: ['type_id', 'title']),
-    ],
-)]
+#[ORM\Table(name: 'materials')]
+#[ORM\UniqueConstraint(name: 'uniq_materials_type_slug', columns: ['type_id', 'slug'])]
+#[ORM\Index(name: 'idx_materials_category', columns: ['category_id'])]
+#[ORM\Index(name: 'idx_materials_type_title', columns: ['type_id', 'title'])]
 #[ORM\HasLifecycleCallbacks]
 #[UniqueEntity(fields: ['type', 'slug'], message: 'Материал с таким slug уже существует для выбранного типа.')]
 class Material

@@ -13,10 +13,8 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 /** Описывает системный тип учебных материалов. */
 #[ORM\Entity]
-#[ORM\Table(
-    name: 'material_types',
-    uniqueConstraints: [new ORM\UniqueConstraint(name: 'uniq_material_types_code', columns: ['code'])],
-)]
+#[ORM\Table(name: 'material_types')]
+#[ORM\UniqueConstraint(name: 'uniq_material_types_code', columns: ['code'])]
 #[UniqueEntity(fields: ['code'], message: 'Тип материала с таким кодом уже существует.')]
 class MaterialType
 {

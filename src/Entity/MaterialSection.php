@@ -13,11 +13,9 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 /** Представляет раскрываемый раздел учебного материала. */
 #[ORM\Entity]
-#[ORM\Table(
-    name: 'material_sections',
-    uniqueConstraints: [new ORM\UniqueConstraint(name: 'uniq_material_sections_material_slug', columns: ['material_id', 'slug'])],
-    indexes: [new ORM\Index(name: 'idx_material_sections_material', columns: ['material_id', 'position'])],
-)]
+#[ORM\Table(name: 'material_sections')]
+#[ORM\UniqueConstraint(name: 'uniq_material_sections_material_slug', columns: ['material_id', 'slug'])]
+#[ORM\Index(name: 'idx_material_sections_material', columns: ['material_id', 'position'])]
 #[UniqueEntity(fields: ['material', 'slug'], message: 'Раздел с таким slug уже существует в выбранном материале.')]
 class MaterialSection
 {
