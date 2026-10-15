@@ -1,0 +1,5 @@
+doctrine:
+    dbal:
+        connections:
+            materials:
+                path: '%kernel.cache_dir%/materials.sqlite'

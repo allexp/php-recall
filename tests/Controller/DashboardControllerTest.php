@@ -6,12 +6,15 @@ namespace App\Tests\Controller;
 
 use App\Entity\AdminUser;
 use App\Kernel;
+use App\Tests\Support\ResetsDatabase;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 /** Проверяет доступ и стандартную оболочку EasyAdmin. */
 final class DashboardControllerTest extends WebTestCase
 {
+    use ResetsDatabase;
+
     protected static function getKernelClass(): string
     {
         return Kernel::class;
@@ -20,6 +23,7 @@ final class DashboardControllerTest extends WebTestCase
     public function testRedirectsGuestToSeparateAdminLogin(): void
     {
         $client = static::createClient();
+        $this->resetDatabase();
 
         $client->request('GET', '/admin');
 
@@ -29,7 +33,7 @@ final class DashboardControllerTest extends WebTestCase
     public function testRendersDashboardForAdministrator(): void
     {
         $client = static::createClient();
-        $entityManager = static::getContainer()->get(EntityManagerInterface::class);
+        $entityManager = $this->resetDatabase();
         $admin = (new AdminUser())
             ->setEmail('dashboard-test@example.com')
             ->setPassword('unused-test-hash');
@@ -75,6 +79,9 @@ final class DashboardControllerTest extends WebTestCase
                 $client->request('GET', $path);
                 self::assertResponseIsSuccessful();
             }
+
+            $client->click($crawler->selectLink('Выйти')->link());
+            self::assertResponseRedirects('/admin/login');
         } finally {
             $entityManager = static::getContainer()->get(EntityManagerInterface::class);
             $storedAdmin = $entityManager->getRepository(AdminUser::class)->findOneBy([

@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace App\Tests\Controller;
 
 use App\Kernel;
+use App\Tests\Support\ResetsDatabase;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 /** Проверяет отдельную форму входа администратора. */
 final class AdminSecurityControllerTest extends WebTestCase
 {
+    use ResetsDatabase;
+
     protected static function getKernelClass(): string
     {
         return Kernel::class;
@@ -18,6 +21,7 @@ final class AdminSecurityControllerTest extends WebTestCase
     public function testLoginPageUsesEasyAdminTemplate(): void
     {
         $client = static::createClient();
+        $this->resetDatabase();
         $crawler = $client->request('GET', '/admin/login');
 
         self::assertResponseIsSuccessful();
@@ -30,6 +34,7 @@ final class AdminSecurityControllerTest extends WebTestCase
     public function testRejectsUnknownAdministrator(): void
     {
         $client = static::createClient();
+        $this->resetDatabase();
         $crawler = $client->request('GET', '/admin/login');
         $form = $crawler->selectButton('Войти')->form([
             '_username' => 'missing-admin@example.com',

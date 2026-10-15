@@ -51,6 +51,19 @@ docker compose exec app php bin/console app:import-function-documentation
 
 Повторный запуск пропускает уже заполненные материалы. Для принудительного обновления используйте `--refresh`; после команды можно указать имена отдельных функций.
 
+## Администрирование
+
+Панель EasyAdmin доступна по адресу <http://localhost:8081/admin> и использует отдельные учётные записи из таблицы `admin_users` базы материалов.
+
+Перед первым входом примените миграции и создайте администратора:
+
+```bash
+docker compose exec app php bin/console doctrine:migrations:migrate --no-interaction
+docker compose exec app php bin/console app:admin:create admin@example.com
+```
+
+Команда запросит пароль длиной не менее 12 символов. Повторный запуск команды для существующего адреса электронной почты обновит пароль администратора.
+
 ## Production
 
 Для запуска в общей Docker-сети существующего Nginx используется отдельная конфигурация:
