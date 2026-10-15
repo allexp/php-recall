@@ -4,14 +4,15 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use Doctrine\DBAL\Connection;
 use PDO;
 
 /** Хранилище практических задач и вариантов решений. */
 final class TaskStore
 {
-    private ?PDO $connection = null;
+    private ?PDO $pdo = null;
 
-    public function __construct(private readonly string $databaseFile)
+    public function __construct(private readonly Connection $database)
     {
     }
 
@@ -53,18 +54,19 @@ final class TaskStore
 
     private function connection(): PDO
     {
-        if ($this->connection instanceof PDO) {
-            return $this->connection;
+        if ($this->pdo instanceof PDO) {
+            return $this->pdo;
         }
 
-        $this->connection = new PDO(
-            'sqlite:' . $this->databaseFile,
-            options: [
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                PDO::ATTR_STRINGIFY_FETCHES => false,
-            ],
-        );
-        return $this->connection;
+        $connection = $this->database->getNativeConnection();
+        if (!$connection instanceof PDO) {
+            throw new \LogicException('Для работы хранилища требуется PDO-подключение.');
+        }
+
+        $connection->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+        $connection->setAttribute(PDO::ATTR_STRINGIFY_FETCHES, false);
+        $this->pdo = $connection;
+
+        return $this->pdo;
     }
 }

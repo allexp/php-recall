@@ -7,10 +7,29 @@ services:
       - user-data:/app/data
     restart: unless-stopped
     environment:
+      DATABASE_URL: postgresql://php_recall:${POSTGRES_PASSWORD:-php_recall}@database:5432/php_recall?serverVersion=16&charset=utf8
       SANDBOX_RUNNER_URL: http://sandbox-runner:8080
       SANDBOX_TOKEN: ${SANDBOX_TOKEN:-development-sandbox-token}
     depends_on:
-      - sandbox-runner
+      database:
+        condition: service_healthy
+      sandbox-runner:
+        condition: service_started
+
+  database:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: php_recall
+      POSTGRES_USER: php_recall
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-php_recall}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U php_recall -d php_recall"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
 
   sandbox-runner:
     image: php-recall-sandbox:local
@@ -27,3 +46,4 @@ services:
 
 volumes:
   user-data:
+  postgres-data:

@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use Doctrine\DBAL\Connection;
 use PDO;
-use RuntimeException;
 
-/** Хранит категории, учебные материалы и примеры кода в SQLite. */
+/** Хранит категории, учебные материалы и примеры кода в основной базе данных. */
 final class MaterialStore
 {
-    private ?PDO $connection = null;
+    private ?PDO $pdo = null;
 
-    public function __construct(private readonly string $databaseFile)
+    public function __construct(private readonly Connection $database)
     {
     }
 
@@ -222,7 +222,8 @@ final class MaterialStore
             $statement->execute(['material_id' => $materialId]);
             $sectionStatement = $connection->prepare(
                 'INSERT INTO material_sections (material_id, title, slug, description, position)
-                 VALUES (:material_id, :title, :slug, :description, :position)'
+                 VALUES (:material_id, :title, :slug, :description, :position)
+                 RETURNING id'
             );
             $exampleStatement = $connection->prepare(
                 'INSERT INTO code_examples (material_id, section_id, title, language, code, position)
@@ -236,7 +237,8 @@ final class MaterialStore
                     'description' => $section['description'],
                     'position' => $position,
                 ]);
-                $sectionId = (int) $connection->lastInsertId();
+                $sectionId = (int) $sectionStatement->fetchColumn();
+                $sectionStatement->closeCursor();
                 foreach ($section['examples'] ?? [] as $examplePosition => $example) {
                     $exampleStatement->execute([
                         'material_id' => $materialId,
@@ -414,98 +416,20 @@ final class MaterialStore
 
     private function connection(): PDO
     {
-        if ($this->connection instanceof PDO) {
-            return $this->connection;
+        if ($this->pdo instanceof PDO) {
+            return $this->pdo;
         }
 
-        $directory = dirname($this->databaseFile);
-        if (!is_dir($directory) && !mkdir($directory, 0770, true) && !is_dir($directory)) {
-            throw new RuntimeException('Не удалось создать каталог базы материалов.');
+        $connection = $this->database->getNativeConnection();
+        if (!$connection instanceof PDO) {
+            throw new \LogicException('Для работы хранилища требуется PDO-подключение.');
         }
 
-        $this->connection = new PDO('sqlite:'.$this->databaseFile, options: [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-        ]);
-        $this->connection->exec('PRAGMA foreign_keys = ON');
-        $this->createSchema();
+        $connection->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+        $connection->setAttribute(PDO::ATTR_STRINGIFY_FETCHES, false);
+        $this->pdo = $connection;
 
-        return $this->connection;
-    }
-
-    private function createSchema(): void
-    {
-        $this->connection?->exec(
-            "CREATE TABLE IF NOT EXISTS material_types (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                code TEXT NOT NULL UNIQUE,
-                title TEXT NOT NULL
-            );
-            CREATE TABLE IF NOT EXISTS categories (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                type_id INTEGER NOT NULL,
-                code TEXT NOT NULL,
-                title TEXT NOT NULL,
-                position INTEGER NOT NULL DEFAULT 0,
-                UNIQUE (type_id, code),
-                FOREIGN KEY (type_id) REFERENCES material_types(id) ON DELETE CASCADE
-            );
-            CREATE TABLE IF NOT EXISTS materials (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                type_id INTEGER NOT NULL,
-                category_id INTEGER,
-                title TEXT NOT NULL,
-                slug TEXT NOT NULL,
-                definition TEXT NOT NULL DEFAULT '',
-                short_description TEXT NOT NULL DEFAULT '',
-                full_description TEXT NOT NULL DEFAULT '',
-                content_format TEXT NOT NULL DEFAULT 'html' CHECK (content_format IN ('html', 'markdown', 'text')),
-                source_url TEXT,
-                position INTEGER NOT NULL DEFAULT 0,
-                created_at TEXT NOT NULL,
-                updated_at TEXT NOT NULL,
-                UNIQUE (type_id, slug),
-                FOREIGN KEY (type_id) REFERENCES material_types(id) ON DELETE CASCADE,
-                FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
-            );
-            CREATE TABLE IF NOT EXISTS code_examples (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                material_id INTEGER NOT NULL,
-                title TEXT NOT NULL DEFAULT '',
-                language TEXT NOT NULL,
-                code TEXT NOT NULL,
-                position INTEGER NOT NULL DEFAULT 0,
-                FOREIGN KEY (material_id) REFERENCES materials(id) ON DELETE CASCADE
-            );
-            CREATE TABLE IF NOT EXISTS material_sections (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                material_id INTEGER NOT NULL,
-                title TEXT NOT NULL,
-                slug TEXT NOT NULL,
-                description TEXT NOT NULL DEFAULT '',
-                position INTEGER NOT NULL DEFAULT 0,
-                UNIQUE (material_id, slug),
-                FOREIGN KEY (material_id) REFERENCES materials(id) ON DELETE CASCADE
-            );
-            CREATE INDEX IF NOT EXISTS idx_categories_type ON categories(type_id, position);
-            CREATE INDEX IF NOT EXISTS idx_materials_category ON materials(category_id);
-            CREATE INDEX IF NOT EXISTS idx_materials_type_title ON materials(type_id, title);
-            CREATE INDEX IF NOT EXISTS idx_code_examples_material ON code_examples(material_id, position);"
-        );
-        $columns = $this->connection?->query('PRAGMA table_info(materials)')->fetchAll(PDO::FETCH_COLUMN, 1) ?? [];
-        if (!in_array('position', $columns, true)) {
-            $this->connection?->exec('ALTER TABLE materials ADD COLUMN position INTEGER NOT NULL DEFAULT 0');
-        }
-        $exampleColumns = $this->connection?->query('PRAGMA table_info(code_examples)')->fetchAll(PDO::FETCH_COLUMN, 1) ?? [];
-        if (!in_array('section_id', $exampleColumns, true)) {
-            $this->connection?->exec(
-                'ALTER TABLE code_examples ADD COLUMN section_id INTEGER REFERENCES material_sections(id) ON DELETE CASCADE'
-            );
-        }
-        $this->connection?->exec(
-            'CREATE INDEX IF NOT EXISTS idx_material_sections_material ON material_sections(material_id, position);
-             CREATE INDEX IF NOT EXISTS idx_code_examples_section ON code_examples(section_id, position)'
-        );
+        return $this->pdo;
     }
 
     private function now(): string

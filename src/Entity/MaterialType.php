@@ -13,7 +13,10 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 /** Описывает системный тип учебных материалов. */
 #[ORM\Entity]
-#[ORM\Table(name: 'material_types')]
+#[ORM\Table(
+    name: 'material_types',
+    uniqueConstraints: [new ORM\UniqueConstraint(name: 'uniq_material_types_code', columns: ['code'])],
+)]
 #[UniqueEntity(fields: ['code'], message: 'Тип материала с таким кодом уже существует.')]
 class MaterialType
 {
@@ -22,7 +25,7 @@ class MaterialType
     #[ORM\Column(type: Types::INTEGER)]
     private ?int $id = null;
 
-    #[ORM\Column(type: Types::TEXT, unique: true)]
+    #[ORM\Column(type: Types::TEXT)]
     #[Assert\NotBlank(message: 'Укажите код типа материала.')]
     #[Assert\Regex(pattern: '/^[a-z0-9]+(?:-[a-z0-9]+)*$/', message: 'Используйте строчные латинские буквы, цифры и дефисы.')]
     private string $code = '';

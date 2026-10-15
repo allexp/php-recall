@@ -4,6 +4,7 @@
     "require": {
         "php": ">=8.3",
         "ext-dom": "*",
+        "ext-pdo_pgsql": "*",
         "doctrine/doctrine-bundle": "^2.19",
         "doctrine/doctrine-migrations-bundle": "^3.7",
         "doctrine/orm": "^3.7",

@@ -6,28 +6,26 @@ namespace App\Tests\Service;
 
 use App\Service\FrameworkCatalog;
 use App\Service\MaterialStore;
+use App\Tests\Support\CreatesTestDatabase;
+use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
 
 /** Проверяет каталог учебных карточек по Laravel. */
 final class FrameworkCatalogTest extends TestCase
 {
-    private string $databaseFile;
+    use CreatesTestDatabase;
+
+    private Connection $database;
 
     protected function setUp(): void
     {
-        $this->databaseFile = sys_get_temp_dir().'/php-recall-frameworks-'.bin2hex(random_bytes(8)).'.sqlite';
-    }
-
-    protected function tearDown(): void
-    {
-        if (is_file($this->databaseFile)) {
-            unlink($this->databaseFile);
-        }
+        $this->database = $this->createTestDatabase();
+        $this->createMaterialSchema($this->database);
     }
 
     public function testReadsLaravelCardsFromDatabase(): void
     {
-        $store = new MaterialStore($this->databaseFile);
+        $store = new MaterialStore($this->database);
         $store->saveMaterial('framework', 'Фреймворки', 'laravel', 'Laravel', [
             'title' => 'Что такое Service Container?',
             'slug' => 'service-container',

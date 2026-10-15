@@ -4,14 +4,15 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use Doctrine\DBAL\Connection;
 use PDO;
 
-/** Хранит учётные записи пользователей в локальной базе SQLite. */
+/** Хранит учётные записи пользователей и их учебный прогресс. */
 final class UserStore
 {
-    private ?PDO $connection = null;
+    private ?PDO $pdo = null;
 
-    public function __construct(private readonly string $databaseFile)
+    public function __construct(private readonly Connection $database)
     {
     }
 
@@ -19,7 +20,9 @@ final class UserStore
     public function create(string $email, string $password): int
     {
         $statement = $this->connection()->prepare(
-            'INSERT INTO users (email, password_hash, created_at) VALUES (:email, :password_hash, :created_at)'
+            'INSERT INTO users (email, password_hash, created_at)
+             VALUES (:email, :password_hash, :created_at)
+             RETURNING id'
         );
         $statement->execute([
             'email' => $this->normaliseEmail($email),
@@ -27,7 +30,7 @@ final class UserStore
             'created_at' => (new \DateTimeImmutable())->format(DATE_ATOM),
         ]);
 
-        return (int) $this->connection()->lastInsertId();
+        return (int) $statement->fetchColumn();
     }
 
     /** Возвращает пользователя по email или null. */
@@ -56,8 +59,9 @@ final class UserStore
     {
         if ($known) {
             $statement = $this->connection()->prepare(
-                'INSERT OR IGNORE INTO known_functions (user_id, function_name, created_at)
-                 VALUES (:user_id, :function_name, :created_at)'
+                'INSERT INTO known_functions (user_id, function_name, created_at)
+                 VALUES (:user_id, :function_name, :created_at)
+                 ON CONFLICT (user_id, function_name) DO NOTHING'
             );
             $statement->execute([
                 'user_id' => $userId,
@@ -90,8 +94,9 @@ final class UserStore
     {
         if ($known) {
             $statement = $this->connection()->prepare(
-                'INSERT OR IGNORE INTO known_concepts (user_id, concept_slug, created_at)
-                 VALUES (:user_id, :concept_slug, :created_at)'
+                'INSERT INTO known_concepts (user_id, concept_slug, created_at)
+                 VALUES (:user_id, :concept_slug, :created_at)
+                 ON CONFLICT (user_id, concept_slug) DO NOTHING'
             );
             $statement->execute([
                 'user_id' => $userId,
@@ -124,8 +129,9 @@ final class UserStore
     {
         if ($known) {
             $statement = $this->connection()->prepare(
-                'INSERT OR IGNORE INTO known_frameworks (user_id, framework_slug, created_at)
-                 VALUES (:user_id, :framework_slug, :created_at)'
+                'INSERT INTO known_frameworks (user_id, framework_slug, created_at)
+                 VALUES (:user_id, :framework_slug, :created_at)
+                 ON CONFLICT (user_id, framework_slug) DO NOTHING'
             );
             $statement->execute([
                 'user_id' => $userId,
@@ -149,56 +155,19 @@ final class UserStore
 
     private function connection(): PDO
     {
-        if ($this->connection instanceof PDO) {
-            return $this->connection;
+        if ($this->pdo instanceof PDO) {
+            return $this->pdo;
         }
 
-        $directory = dirname($this->databaseFile);
-        if (!is_dir($directory) && !mkdir($directory, 0770, true) && !is_dir($directory)) {
-            throw new \RuntimeException('Не удалось создать каталог базы пользователей.');
+        $connection = $this->database->getNativeConnection();
+        if (!$connection instanceof PDO) {
+            throw new \LogicException('Для работы хранилища требуется PDO-подключение.');
         }
 
-        $this->connection = new PDO('sqlite:'.$this->databaseFile, options: [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-        ]);
-        $this->connection->exec('PRAGMA foreign_keys = ON');
-        $this->connection->exec(
-            'CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                email TEXT NOT NULL COLLATE NOCASE UNIQUE,
-                password_hash TEXT NOT NULL,
-                created_at TEXT NOT NULL
-            )'
-        );
-        $this->connection->exec(
-            'CREATE TABLE IF NOT EXISTS known_functions (
-                user_id INTEGER NOT NULL,
-                function_name TEXT NOT NULL,
-                created_at TEXT NOT NULL,
-                PRIMARY KEY (user_id, function_name),
-                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-            )'
-        );
-        $this->connection->exec(
-            'CREATE TABLE IF NOT EXISTS known_concepts (
-                user_id INTEGER NOT NULL,
-                concept_slug TEXT NOT NULL,
-                created_at TEXT NOT NULL,
-                PRIMARY KEY (user_id, concept_slug),
-                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-            )'
-        );
-        $this->connection->exec(
-            'CREATE TABLE IF NOT EXISTS known_frameworks (
-                user_id INTEGER NOT NULL,
-                framework_slug TEXT NOT NULL,
-                created_at TEXT NOT NULL,
-                PRIMARY KEY (user_id, framework_slug),
-                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-            )'
-        );
+        $connection->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+        $connection->setAttribute(PDO::ATTR_STRINGIFY_FETCHES, false);
+        $this->pdo = $connection;
 
-        return $this->connection;
+        return $this->pdo;
     }
 }

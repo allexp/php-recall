@@ -1,8 +1,3 @@
-parameters:
-    app.default_material_database: '%kernel.project_dir%/data/materials.sqlite'
-    app.material_database: '%env(default:app.default_material_database:MATERIAL_DATABASE)%'
-    app.user_database: '%kernel.project_dir%/data/users.sqlite'
-
 services:
     _defaults:
         autowire: true
@@ -11,17 +6,9 @@ services:
     App\:
         resource: '../src/'
 
-    App\Service\MaterialStore:
+    App\Command\ImportSqliteDataCommand:
         arguments:
-            $databaseFile: '%app.material_database%'
-
-    App\Service\TaskStore:
-        arguments:
-            $databaseFile: '%app.material_database%'
-
-    App\Service\UserStore:
-        arguments:
-            $databaseFile: '%app.user_database%'
+            $projectDir: '%kernel.project_dir%'
 
     App\Service\SandboxClient:
         arguments:

@@ -15,7 +15,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /** Импортирует документацию PHP-функций в базу учебных материалов. */
-#[AsCommand(name: 'app:import-function-documentation', description: 'Загружает документацию функций из PHP Manual в SQLite')]
+#[AsCommand(name: 'app:import-function-documentation', description: 'Загружает документацию функций из PHP Manual в базу материалов')]
 final class ImportFunctionDocumentationCommand extends Command
 {
     public function __construct(

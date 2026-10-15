@@ -2,12 +2,12 @@ FROM composer:2 AS dependencies
 
 WORKDIR /app
 COPY composer.json composer.lock ./
-RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader --no-scripts
+RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader --no-scripts --ignore-platform-req=ext-pdo_pgsql
 
 FROM php:8.3-cli-alpine
 
-RUN apk add --no-cache ca-certificates libxml2-dev sqlite-dev \
-    && docker-php-ext-install dom pdo_sqlite
+RUN apk add --no-cache ca-certificates libpq-dev libxml2-dev sqlite-dev \
+    && docker-php-ext-install dom pdo_pgsql pdo_sqlite
 
 WORKDIR /app
 COPY . /app

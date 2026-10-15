@@ -5,28 +5,26 @@ declare(strict_types=1);
 namespace App\Tests\Service;
 
 use App\Service\MaterialStore;
+use App\Tests\Support\CreatesTestDatabase;
+use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
 
 /** Проверяет единое хранилище учебных материалов. */
 final class MaterialStoreTest extends TestCase
 {
-    private string $databaseFile;
+    use CreatesTestDatabase;
+
+    private Connection $database;
 
     protected function setUp(): void
     {
-        $this->databaseFile = sys_get_temp_dir().'/php-recall-materials-'.bin2hex(random_bytes(8)).'.sqlite';
-    }
-
-    protected function tearDown(): void
-    {
-        if (is_file($this->databaseFile)) {
-            unlink($this->databaseFile);
-        }
+        $this->database = $this->createTestDatabase();
+        $this->createMaterialSchema($this->database);
     }
 
     public function testReadsFunctionCatalogWithoutDuplicates(): void
     {
-        $store = new MaterialStore($this->databaseFile);
+        $store = new MaterialStore($this->database);
         $catalog = [
             'arrays' => ['title' => 'Массивы', 'functions' => ['array_map', 'array_filter']],
         ];
@@ -51,7 +49,7 @@ final class MaterialStoreTest extends TestCase
 
     public function testStoresFunctionDocumentationInSeparateFields(): void
     {
-        $store = new MaterialStore($this->databaseFile);
+        $store = new MaterialStore($this->database);
         $store->saveMaterial('function', 'PHP-функции', 'arrays', 'Массивы', [
             'title' => 'array_map',
             'slug' => 'array_map',
@@ -77,7 +75,7 @@ final class MaterialStoreTest extends TestCase
 
     public function testStoresConceptWithOrderedCodeExamples(): void
     {
-        $store = new MaterialStore($this->databaseFile);
+        $store = new MaterialStore($this->database);
         $materialId = $store->saveMaterial('concept', 'Концепции разработки', 'principles', 'Принципы', [
             'title' => 'SOLID',
             'slug' => 'solid',
@@ -100,7 +98,7 @@ final class MaterialStoreTest extends TestCase
 
     public function testStoresIndependentlyExpandableConceptSections(): void
     {
-        $store = new MaterialStore($this->databaseFile);
+        $store = new MaterialStore($this->database);
         $materialId = $store->saveMaterial('concept', 'Концепции разработки', 'principles', 'Принципы', [
             'title' => 'SOLID',
             'slug' => 'solid',
@@ -128,7 +126,7 @@ final class MaterialStoreTest extends TestCase
 
     public function testKeepsFrameworkCatalogSeparateFromConcepts(): void
     {
-        $store = new MaterialStore($this->databaseFile);
+        $store = new MaterialStore($this->database);
         $store->saveMaterial('concept', 'Концепции разработки', 'architecture', 'Архитектура', [
             'title' => 'MVC',
             'slug' => 'mvc',
