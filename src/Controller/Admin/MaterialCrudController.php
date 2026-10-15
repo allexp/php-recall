@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Controller\Admin;
 
+use App\Entity\Category;
 use App\Entity\Material;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Asset;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
@@ -42,12 +44,17 @@ final class MaterialCrudController extends AbstractCrudController
             ->setCrudController(MaterialTypeCrudController::class)
             ->setSortProperty('title')
             ->autocomplete()
+            ->setFormTypeOption('attr.data-material-type-source', 'true')
             ->setColumns(6);
         yield AssociationField::new('category', 'Категория')
             ->setCrudController(CategoryCrudController::class)
             ->setSortProperty('title')
-            ->autocomplete()
+            ->setFormTypeOption('choice_attr', static fn (Category $category): array => [
+                'data-material-type-id' => (string) $category->getType()?->getId(),
+            ])
+            ->setFormTypeOption('attr.data-material-category-target', 'true')
             ->setRequired(false)
+            ->addJsFiles(Asset::new('admin-material-category-filter.js')->onlyOnForms())
             ->setColumns(6);
         yield TextField::new('title', 'Название')->setColumns(8);
         yield SlugField::new('slug', 'Slug')

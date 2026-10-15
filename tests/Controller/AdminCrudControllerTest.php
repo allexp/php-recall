@@ -125,9 +125,18 @@ final class AdminCrudControllerTest extends WebTestCase
         $entityManager->flush();
 
         $crawler = $client->request('GET', '/admin/material/new');
+        self::assertSelectorExists('script[src$="/admin-material-category-filter.js"]');
         $form = $crawler->filter('form[name="Material"]')->form();
+        self::assertSame(
+            (string) $type->getId(),
+            $crawler->filter(sprintf('select[name="Material[category]"] option[value="%d"]', $category->getId()))->attr('data-material-type-id'),
+        );
+        self::assertSame(
+            (string) $otherType->getId(),
+            $crawler->filter(sprintf('select[name="Material[category]"] option[value="%d"]', $otherCategory->getId()))->attr('data-material-type-id'),
+        );
         $form['Material[type][autocomplete]']->disableValidation()->select((string) $type->getId());
-        $form['Material[category][autocomplete]']->disableValidation()->select((string) $otherCategory->getId());
+        $form['Material[category]']->disableValidation()->select((string) $otherCategory->getId());
         $form->setValues([
             'Material[title]' => 'Материал с неверной категорией',
             'Material[slug]' => 'invalid-category',

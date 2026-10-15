@@ -13,6 +13,7 @@ services:
       - ./migrations:/app/migrations
       - ./public/app.css:/app/public/app.css
       - ./public/app.js:/app/public/app.js
+      - ./public/admin-material-category-filter.js:/app/public/admin-material-category-filter.js
       - ./public/favicon.png:/app/public/favicon.png
       - ./public/index.php:/app/public/index.php
       - ./public/router.php:/app/public/router.php
