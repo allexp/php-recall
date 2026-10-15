@@ -11,6 +11,11 @@ services:
       - ./bin:/app/bin
       - ./config:/app/config
       - ./migrations:/app/migrations
-      - ./public:/app/public
+      - ./public/app.css:/app/public/app.css
+      - ./public/app.js:/app/public/app.js
+      - ./public/favicon.png:/app/public/favicon.png
+      - ./public/index.php:/app/public/index.php
+      - ./public/router.php:/app/public/router.php
+      - ./public/sandbox-editor.js:/app/public/sandbox-editor.js
       - ./src:/app/src
       - ./templates:/app/templates

@@ -13,6 +13,8 @@ WORKDIR /app
 COPY . /app
 COPY --from=dependencies /app/vendor /app/vendor
 
+RUN APP_ENV=prod APP_DEBUG=0 php bin/console assets:install public --no-interaction
+
 RUN mkdir -p /app/var/cache /app/var/log /app/data \
     && chown -R www-data:www-data /app/var /app/data
 
