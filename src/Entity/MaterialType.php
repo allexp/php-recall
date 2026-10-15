@@ -8,10 +8,13 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\Validator\Constraints as Assert;
 
 /** Описывает системный тип учебных материалов. */
 #[ORM\Entity]
 #[ORM\Table(name: 'material_types')]
+#[UniqueEntity(fields: ['code'], message: 'Тип материала с таким кодом уже существует.')]
 class MaterialType
 {
     #[ORM\Id]
@@ -20,9 +23,12 @@ class MaterialType
     private ?int $id = null;
 
     #[ORM\Column(type: Types::TEXT, unique: true)]
+    #[Assert\NotBlank(message: 'Укажите код типа материала.')]
+    #[Assert\Regex(pattern: '/^[a-z0-9]+(?:-[a-z0-9]+)*$/', message: 'Используйте строчные латинские буквы, цифры и дефисы.')]
     private string $code = '';
 
     #[ORM\Column(type: Types::TEXT)]
+    #[Assert\NotBlank(message: 'Укажите название типа материала.')]
     private string $title = '';
 
     /** @var Collection<int, Category> */

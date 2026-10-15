@@ -8,6 +8,9 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 /** Представляет одну учебную карточку в каталоге. */
 #[ORM\Entity]
@@ -20,6 +23,7 @@ use Doctrine\ORM\Mapping as ORM;
     ],
 )]
 #[ORM\HasLifecycleCallbacks]
+#[UniqueEntity(fields: ['type', 'slug'], message: 'Материал с таким slug уже существует для выбранного типа.')]
 class Material
 {
     public const FORMAT_HTML = 'html';
@@ -33,6 +37,7 @@ class Material
 
     #[ORM\ManyToOne(targetEntity: MaterialType::class, inversedBy: 'materials')]
     #[ORM\JoinColumn(name: 'type_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
+    #[Assert\NotNull(message: 'Выберите тип материала.')]
     private ?MaterialType $type = null;
 
     #[ORM\ManyToOne(targetEntity: Category::class, inversedBy: 'materials')]
@@ -40,9 +45,12 @@ class Material
     private ?Category $category = null;
 
     #[ORM\Column(type: Types::TEXT)]
+    #[Assert\NotBlank(message: 'Укажите название материала.')]
     private string $title = '';
 
     #[ORM\Column(type: Types::TEXT)]
+    #[Assert\NotBlank(message: 'Укажите slug материала.')]
+    #[Assert\Regex(pattern: '/^[a-z0-9]+(?:[-_][a-z0-9]+)*$/', message: 'Используйте строчные латинские буквы, цифры, дефисы и подчёркивания.')]
     private string $slug = '';
 
     #[ORM\Column(type: Types::TEXT, options: ['default' => ''])]
@@ -55,12 +63,15 @@ class Material
     private string $fullDescription = '';
 
     #[ORM\Column(name: 'content_format', type: Types::TEXT, options: ['default' => self::FORMAT_HTML])]
+    #[Assert\Choice(choices: [self::FORMAT_HTML, self::FORMAT_MARKDOWN, self::FORMAT_TEXT], message: 'Выберите допустимый формат содержимого.')]
     private string $contentFormat = self::FORMAT_HTML;
 
     #[ORM\Column(name: 'source_url', type: Types::TEXT, nullable: true)]
+    #[Assert\Url(message: 'Укажите корректный URL источника.')]
     private ?string $sourceUrl = null;
 
     #[ORM\Column(type: Types::INTEGER, options: ['default' => 0])]
+    #[Assert\PositiveOrZero(message: 'Позиция не может быть отрицательной.')]
     private int $position = 0;
 
     #[ORM\Column(name: 'created_at', type: Types::TEXT)]
@@ -287,6 +298,16 @@ class Material
     public function updateTimestamp(): void
     {
         $this->updatedAt = (new \DateTimeImmutable())->format(DATE_ATOM);
+    }
+
+    #[Assert\Callback]
+    public function validateCategoryType(ExecutionContextInterface $context): void
+    {
+        if ($this->category !== null && $this->category->getType() !== $this->type) {
+            $context->buildViolation('Категория должна принадлежать выбранному типу материала.')
+                ->atPath('category')
+                ->addViolation();
+        }
     }
 
     public function __toString(): string

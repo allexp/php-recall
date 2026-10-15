@@ -1,5 +1,6 @@
 framework:
     secret: '%env(APP_SECRET)%'
+    default_locale: ru
     router:
         utf8: true
     http_method_override: false

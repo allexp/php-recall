@@ -6,6 +6,8 @@ namespace App\Entity;
 
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 /** Хранит пример исходного кода материала или его раздела. */
 #[ORM\Entity]
@@ -25,6 +27,7 @@ class CodeExample
 
     #[ORM\ManyToOne(targetEntity: Material::class, inversedBy: 'codeExamples')]
     #[ORM\JoinColumn(name: 'material_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
+    #[Assert\NotNull(message: 'Выберите материал.')]
     private ?Material $material = null;
 
     #[ORM\ManyToOne(targetEntity: MaterialSection::class, inversedBy: 'codeExamples')]
@@ -35,12 +38,15 @@ class CodeExample
     private string $title = '';
 
     #[ORM\Column(type: Types::TEXT)]
+    #[Assert\NotBlank(message: 'Укажите язык примера.')]
     private string $language = '';
 
     #[ORM\Column(type: Types::TEXT)]
+    #[Assert\NotBlank(message: 'Добавьте исходный код примера.')]
     private string $code = '';
 
     #[ORM\Column(type: Types::INTEGER, options: ['default' => 0])]
+    #[Assert\PositiveOrZero(message: 'Позиция не может быть отрицательной.')]
     private int $position = 0;
 
     public function getId(): ?int
@@ -118,6 +124,16 @@ class CodeExample
         $this->position = $position;
 
         return $this;
+    }
+
+    #[Assert\Callback]
+    public function validateSectionMaterial(ExecutionContextInterface $context): void
+    {
+        if ($this->section !== null && $this->section->getMaterial() !== $this->material) {
+            $context->buildViolation('Раздел должен принадлежать выбранному материалу.')
+                ->atPath('section')
+                ->addViolation();
+        }
     }
 
     public function __toString(): string

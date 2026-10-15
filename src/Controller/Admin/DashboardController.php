@@ -34,6 +34,12 @@ final class DashboardController extends AbstractDashboardController
     {
         yield MenuItem::linkToDashboard('Главная', 'fa fa-house');
         yield MenuItem::section('Управление материалами');
+        yield MenuItem::linkTo(MaterialCrudController::class, 'Материалы', 'fa fa-file-lines');
+        yield MenuItem::linkTo(MaterialTypeCrudController::class, 'Типы материалов', 'fa fa-layer-group');
+        yield MenuItem::linkTo(CategoryCrudController::class, 'Категории', 'fa fa-folder');
+        yield MenuItem::linkTo(MaterialSectionCrudController::class, 'Разделы материалов', 'fa fa-list');
+        yield MenuItem::linkTo(CodeExampleCrudController::class, 'Примеры кода', 'fa fa-code');
+        yield MenuItem::section();
         yield MenuItem::linkToRoute('Перейти на сайт', 'fa fa-arrow-up-right-from-square', 'app_home');
         yield MenuItem::linkToLogout('Выйти', 'fa fa-right-from-bracket');
     }

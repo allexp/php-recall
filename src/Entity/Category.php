@@ -8,6 +8,8 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\Validator\Constraints as Assert;
 
 /** Группирует материалы внутри одного системного типа. */
 #[ORM\Entity]
@@ -16,6 +18,7 @@ use Doctrine\ORM\Mapping as ORM;
     uniqueConstraints: [new ORM\UniqueConstraint(name: 'uniq_categories_type_code', columns: ['type_id', 'code'])],
     indexes: [new ORM\Index(name: 'idx_categories_type', columns: ['type_id', 'position'])],
 )]
+#[UniqueEntity(fields: ['type', 'code'], message: 'Категория с таким кодом уже существует для выбранного типа.')]
 class Category
 {
     #[ORM\Id]
@@ -25,15 +28,20 @@ class Category
 
     #[ORM\ManyToOne(targetEntity: MaterialType::class, inversedBy: 'categories')]
     #[ORM\JoinColumn(name: 'type_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
+    #[Assert\NotNull(message: 'Выберите тип материала.')]
     private ?MaterialType $type = null;
 
     #[ORM\Column(type: Types::TEXT)]
+    #[Assert\NotBlank(message: 'Укажите код категории.')]
+    #[Assert\Regex(pattern: '/^[a-z0-9]+(?:-[a-z0-9]+)*$/', message: 'Используйте строчные латинские буквы, цифры и дефисы.')]
     private string $code = '';
 
     #[ORM\Column(type: Types::TEXT)]
+    #[Assert\NotBlank(message: 'Укажите название категории.')]
     private string $title = '';
 
     #[ORM\Column(type: Types::INTEGER, options: ['default' => 0])]
+    #[Assert\PositiveOrZero(message: 'Позиция не может быть отрицательной.')]
     private int $position = 0;
 
     /** @var Collection<int, Material> */

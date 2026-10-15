@@ -38,7 +38,7 @@ final class DashboardControllerTest extends WebTestCase
 
         try {
             $client->loginUser($admin, 'admin');
-            $client->request('GET', '/admin');
+            $crawler = $client->request('GET', '/admin');
 
             self::assertResponseIsSuccessful();
             self::assertSelectorTextContains('.logo', 'PHP Recall');
@@ -46,6 +46,35 @@ final class DashboardControllerTest extends WebTestCase
             self::assertSelectorTextContains('.ea-sidebar', 'Управление материалами');
             self::assertSelectorTextContains('.ea-sidebar', 'Перейти на сайт');
             self::assertSelectorTextContains('.ea-sidebar', 'Выйти');
+
+            foreach (['Материалы', 'Типы материалов', 'Категории', 'Разделы материалов', 'Примеры кода'] as $label) {
+                $link = $crawler->selectLink($label)->link();
+                $client->click($link);
+                self::assertResponseIsSuccessful();
+            }
+
+            foreach ([
+                '/admin/material/new',
+                '/admin/material-type/new',
+                '/admin/category/new',
+                '/admin/material-section/new',
+                '/admin/code-example/new',
+            ] as $path) {
+                $client->request('GET', $path);
+                self::assertResponseIsSuccessful();
+                self::assertSelectorExists('form');
+            }
+
+            foreach ([
+                '/admin/material?query=__missing__',
+                '/admin/material-type?query=__missing__',
+                '/admin/category?query=__missing__',
+                '/admin/material-section?query=__missing__',
+                '/admin/code-example?query=__missing__',
+            ] as $path) {
+                $client->request('GET', $path);
+                self::assertResponseIsSuccessful();
+            }
         } finally {
             $entityManager = static::getContainer()->get(EntityManagerInterface::class);
             $storedAdmin = $entityManager->getRepository(AdminUser::class)->findOneBy([

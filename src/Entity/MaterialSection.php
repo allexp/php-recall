@@ -8,6 +8,8 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\Validator\Constraints as Assert;
 
 /** Представляет раскрываемый раздел учебного материала. */
 #[ORM\Entity]
@@ -16,6 +18,7 @@ use Doctrine\ORM\Mapping as ORM;
     uniqueConstraints: [new ORM\UniqueConstraint(name: 'uniq_material_sections_material_slug', columns: ['material_id', 'slug'])],
     indexes: [new ORM\Index(name: 'idx_material_sections_material', columns: ['material_id', 'position'])],
 )]
+#[UniqueEntity(fields: ['material', 'slug'], message: 'Раздел с таким slug уже существует в выбранном материале.')]
 class MaterialSection
 {
     #[ORM\Id]
@@ -25,18 +28,23 @@ class MaterialSection
 
     #[ORM\ManyToOne(targetEntity: Material::class, inversedBy: 'sections')]
     #[ORM\JoinColumn(name: 'material_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
+    #[Assert\NotNull(message: 'Выберите материал.')]
     private ?Material $material = null;
 
     #[ORM\Column(type: Types::TEXT)]
+    #[Assert\NotBlank(message: 'Укажите название раздела.')]
     private string $title = '';
 
     #[ORM\Column(type: Types::TEXT)]
+    #[Assert\NotBlank(message: 'Укажите slug раздела.')]
+    #[Assert\Regex(pattern: '/^[a-z0-9]+(?:-[a-z0-9]+)*$/', message: 'Используйте строчные латинские буквы, цифры и дефисы.')]
     private string $slug = '';
 
     #[ORM\Column(type: Types::TEXT, options: ['default' => ''])]
     private string $description = '';
 
     #[ORM\Column(type: Types::INTEGER, options: ['default' => 0])]
+    #[Assert\PositiveOrZero(message: 'Позиция не может быть отрицательной.')]
     private int $position = 0;
 
     /** @var Collection<int, CodeExample> */
