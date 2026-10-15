@@ -33,7 +33,7 @@ class AdminUser implements UserInterface, PasswordAuthenticatedUserInterface
 
     /** @var list<string> */
     #[ORM\Column(type: Types::JSON)]
-    private array $roles = [];
+    private array $roles = ['ROLE_ADMIN'];
 
     #[ORM\Column(name: 'created_at', type: Types::TEXT)]
     private string $createdAt;
