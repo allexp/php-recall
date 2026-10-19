@@ -135,6 +135,17 @@ button { font: inherit; cursor: pointer; }
 .manual h2, .manual h3 { margin-top: 32px; color: var(--text); line-height: 1.25; }
 pre { overflow-x: auto; padding: 18px; border: 1px solid var(--border); border-radius: 12px; background: #0d1014; color: #d8ffca; line-height: 1.55; }
 code { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+.hljs { color: #c9d1d9; background: #0d1014; }
+.hljs-comment, .hljs-quote { color: #8b949e; font-style: italic; }
+.hljs-keyword, .hljs-selector-tag, .hljs-literal, .hljs-type { color: #ff7b72; }
+.hljs-title, .hljs-title.class_, .hljs-title.function_ { color: #d2a8ff; }
+.hljs-attr, .hljs-attribute, .hljs-variable, .hljs-template-variable { color: #79c0ff; }
+.hljs-string, .hljs-regexp, .hljs-meta .hljs-string { color: #a5d6ff; }
+.hljs-number, .hljs-symbol, .hljs-bullet { color: #79c0ff; }
+.hljs-built_in, .hljs-meta, .hljs-selector-id, .hljs-selector-class { color: #ffa657; }
+.hljs-name, .hljs-tag { color: #7ee787; }
+.hljs-section, .hljs-emphasis { font-style: italic; }
+.hljs-strong { font-weight: 700; }
 table { width: 100%; border-collapse: collapse; }
 th, td { padding: 10px; border: 1px solid var(--border); text-align: left; }
 a { color: var(--accent); }

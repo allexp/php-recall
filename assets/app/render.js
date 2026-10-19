@@ -1,4 +1,5 @@
 import { loadDocumentation } from './api.js';
+import { highlightCodeBlocks } from './code-highlight.js';
 import { elements } from './dom.js';
 import { categoryTitle, currentPool, materialSummary, state } from './state.js';
 
@@ -81,6 +82,7 @@ function appendExamples(container, examples) {
         title.className = 'example-title';
         title.textContent = example.title || `Пример на ${example.language}`;
         code.textContent = example.code;
+        code.dataset.language = example.language;
         pre.append(code);
         container.append(title, pre);
     });
@@ -104,4 +106,5 @@ export function renderMaterialFull(material) {
         sections.append(details);
     });
     elements.manual.append(sections);
+    highlightCodeBlocks(elements.manual);
 }
