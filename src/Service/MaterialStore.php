@@ -50,8 +50,21 @@ final class MaterialStore
         return $this->materialCatalog('framework');
     }
 
+    /** Возвращает типы материалов для построения публичного меню. */
+    public function materialTypes(): array
+    {
+        $rows = $this->connection()->query(
+            'SELECT code, title FROM material_types ORDER BY title, id'
+        )->fetchAll();
+
+        return array_map(static fn (array $row): array => [
+            'code' => (string) $row['code'],
+            'title' => (string) $row['title'],
+        ], $rows);
+    }
+
     /** Возвращает каталог материалов указанного типа, сгруппированный по категориям. */
-    private function materialCatalog(string $typeCode): array
+    public function materialCatalog(string $typeCode): array
     {
         $statement = $this->connection()->prepare(
             "SELECT categories.code, categories.title AS category_title,

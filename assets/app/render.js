@@ -34,9 +34,9 @@ export function renderItem() {
     elements.categoryLabel.textContent = categoryTitle(slug);
     elements.prompt.textContent = state.mode === 'functions'
         ? (isDefinitionQuiz ? 'Вспомните название этой функции.' : 'Вспомните, что делает эта функция.')
-        : (state.mode === 'frameworks' ? 'Сформулируйте ответ своими словами.' : 'Вспомните определение и смысл этой концепции.');
+        : (state.mode === 'concepts' ? 'Вспомните определение и смысл этой концепции.' : 'Сформулируйте ответ своими словами.');
     elements.previous.disabled = state.historyIndex <= 0;
-    const itemLabel = { functions: 'функций', concepts: 'концепций', frameworks: 'карточек' }[state.mode];
+    const itemLabel = { functions: 'функций', concepts: 'концепций', frameworks: 'карточек' }[state.mode] ?? 'материалов';
     elements.progress.textContent = `${currentPool(elements.category.value).length} ${itemLabel} в подборке`;
     elements.reveal.textContent = 'Показать';
     elements.reveal.classList.remove('hidden');

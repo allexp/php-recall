@@ -3,6 +3,8 @@ export const state = {
     functionCatalog: {},
     conceptCatalog: {},
     frameworkCatalog: {},
+    materialCatalogs: {},
+    materialTypeTitles: {},
     mode: 'functions',
     quizMode: 'name',
     history: [],
@@ -19,9 +21,21 @@ export const counters = {
     reveal: 'php_recall_reveal',
 };
 
+const materialModePrefix = 'material:';
+
+export function materialMode(typeCode) {
+    return `${materialModePrefix}${typeCode}`;
+}
+
+export function materialTypeCode(mode) {
+    return mode.startsWith(materialModePrefix) ? mode.slice(materialModePrefix.length) : null;
+}
+
 export function categories() {
     if (state.mode === 'functions') return state.functionCatalog;
-    return state.mode === 'concepts' ? state.conceptCatalog : state.frameworkCatalog;
+    if (state.mode === 'concepts') return state.conceptCatalog;
+    if (state.mode === 'frameworks') return state.frameworkCatalog;
+    return state.materialCatalogs[state.mode] ?? {};
 }
 
 export function categoryItems(category) {
@@ -39,7 +53,9 @@ export function currentPool(selectedCategory) {
 
 export function categoryTitle(slug) {
     return Object.values(categories()).find((category) => categoryItems(category).includes(slug))?.title
-        ?? ({ functions: 'Функция PHP', concepts: 'Концепция разработки', frameworks: 'Фреймворк' }[state.mode] ?? 'Материал');
+        ?? ({ functions: 'Функция PHP', concepts: 'Концепция разработки', frameworks: 'Фреймворк' }[state.mode]
+            ?? state.materialTypeTitles[state.mode]
+            ?? 'Материал');
 }
 
 export function materialSummary(slug) {

@@ -24,12 +24,13 @@ final class AppController extends AbstractController
 {
     /** Отображает учебный интерфейс приложения. */
     #[Route('/', name: 'app_home', methods: ['GET'])]
-    public function index(Request $request, CsrfTokens $csrf): Response
+    public function index(Request $request, CsrfTokens $csrf, MaterialStore $materials): Response
     {
         return $this->render('app/index.html.twig', [
             'logout_token' => $csrf->get($request, 'logout'),
             'knowledge_token' => $csrf->get($request, 'knowledge'),
             'sandbox_token' => $csrf->get($request, 'sandbox'),
+            'material_types' => $materials->materialTypes(),
         ]);
     }
 
@@ -82,6 +83,33 @@ final class AppController extends AbstractController
     public function frameworks(FrameworkCatalog $catalog): JsonResponse
     {
         return $this->json($catalog->all());
+    }
+
+    /** Возвращает категории и карточки произвольного типа материалов. */
+    #[Route('/api/material-types/{typeCode}', name: 'api_material_type_catalog', requirements: ['typeCode' => '[a-z0-9]+(?:-[a-z0-9]+)*'], methods: ['GET'])]
+    public function materialTypeCatalog(string $typeCode, MaterialStore $materials): JsonResponse
+    {
+        return $this->json($materials->materialCatalog($typeCode));
+    }
+
+    /** Возвращает полное описание материала произвольного типа. */
+    #[Route('/api/material-types/{typeCode}/{slug}', name: 'api_material_type', requirements: ['typeCode' => '[a-z0-9]+(?:-[a-z0-9]+)*', 'slug' => '[a-z0-9]+(?:[-_][a-z0-9]+)*'], methods: ['GET'])]
+    public function materialType(string $typeCode, string $slug, MaterialStore $materials): JsonResponse
+    {
+        $material = $materials->material($typeCode, $slug);
+        if ($material === null) {
+            return $this->json(['error' => 'Материал не найден.'], Response::HTTP_NOT_FOUND);
+        }
+
+        return $this->json([
+            'title' => $material['title'],
+            'definition' => $material['definition'],
+            'short_description' => $material['short_description'],
+            'full_description' => $material['full_description'],
+            'source_url' => $material['source_url'],
+            'code_examples' => $material['code_examples'],
+            'sections' => $material['sections'],
+        ]);
     }
 
     /** Возвращает одну случайную задачу выбранной сложности. */

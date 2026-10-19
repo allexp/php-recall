@@ -1,4 +1,4 @@
-import { state } from './state.js';
+import { materialMode, materialTypeCode, state } from './state.js';
 
 async function jsonRequest(path, options, fallbackMessage) {
     // API возвращает пользовательское описание ошибки, но для некорректного ответа предусмотрен резервный текст.
@@ -19,6 +19,15 @@ export async function loadCatalogs() {
     state.functionCatalog = await functionsResponse.json();
     state.conceptCatalog = await conceptsResponse.json();
     state.frameworkCatalog = await frameworksResponse.json();
+    await Promise.all([...document.querySelectorAll('[data-material-type]')].map(async (button) => {
+        const typeCode = button.dataset.materialType;
+        const mode = materialMode(typeCode);
+        const response = await fetch(`api/material-types/${encodeURIComponent(typeCode)}`);
+        if (!response.ok) throw new Error('Не удалось загрузить каталог материалов.');
+        state.materialCatalogs[mode] = await response.json();
+        state.materialTypeTitles[mode] = button.textContent.trim();
+        state.knownItems[mode] = new Set();
+    }));
 }
 
 export async function loadKnowledge() {
@@ -30,6 +39,11 @@ export async function loadKnowledge() {
 }
 
 export async function setKnowledge(slug, isKnown, mode) {
+    if (!(mode in { functions: true, concepts: true, frameworks: true })) {
+        if (isKnown) state.knownItems[mode].add(slug);
+        else state.knownItems[mode].delete(slug);
+        return;
+    }
     if (!state.isAuthenticated) return;
     const prefix = { functions: '', concepts: 'concept/', frameworks: 'framework/' }[mode];
     const path = `api/knowledge/${prefix}${encodeURIComponent(slug)}`;
@@ -46,7 +60,10 @@ export async function loadDocumentation(slug, mode) {
     const key = `${mode}:${slug}`;
     if (state.documentation.has(key)) return state.documentation.get(key);
     const prefix = { functions: 'manual', concepts: 'concepts', frameworks: 'frameworks' }[mode];
-    const path = `api/${prefix}/${encodeURIComponent(slug)}`;
+    const typeCode = materialTypeCode(mode);
+    const path = prefix
+        ? `api/${prefix}/${encodeURIComponent(slug)}`
+        : `api/material-types/${encodeURIComponent(typeCode)}/${encodeURIComponent(slug)}`;
     const data = await jsonRequest(path, undefined, 'Не удалось загрузить материал.');
     state.documentation.set(key, data);
     return data;

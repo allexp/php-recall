@@ -1,7 +1,7 @@
 import { loadCatalogs, loadKnowledge } from './api.js';
 import { elements } from './dom.js';
 import { runSandbox } from './sandbox.js';
-import { state } from './state.js';
+import { materialMode, state } from './state.js';
 import { revealTaskSolution, runTask, showTask } from './tasks.js';
 import {
     initialiseView,
@@ -25,6 +25,9 @@ elements.category.addEventListener('change', resetFunctionCycle);
 elements.functionsMode.addEventListener('click', () => setMode('functions'));
 elements.conceptsMode.addEventListener('click', () => setMode('concepts'));
 elements.frameworksMode.addEventListener('click', () => setMode('frameworks'));
+elements.materialTypeModes.forEach((button) => {
+    button.addEventListener('click', () => setMode(materialMode(button.dataset.materialType)));
+});
 elements.tasksMode.addEventListener('click', () => { setMode('tasks'); showTask(); });
 elements.quizByName.addEventListener('click', () => setQuizMode('name'));
 elements.quizByDefinition.addEventListener('click', () => setQuizMode('definition'));

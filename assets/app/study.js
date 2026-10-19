@@ -2,24 +2,27 @@ import { loadDocumentation, setKnowledge } from './api.js';
 import { elements } from './dom.js';
 import { renderCycleComplete, renderItem, renderMaterialFull, updateCycleProgress } from './render.js';
 import { incrementCounter, updateStatistics } from './statistics.js';
-import { categories, categoryItems, counters, currentPool, resetHistory, state } from './state.js';
+import { categories, categoryItems, counters, currentPool, materialMode, resetHistory, state } from './state.js';
 
 export function refillCategories() {
-    const allTitle = { functions: 'Все функции', concepts: 'Все концепции', frameworks: 'Все карточки' }[state.mode];
+    const allTitle = { functions: 'Все функции', concepts: 'Все концепции', frameworks: 'Все карточки' }[state.mode] ?? 'Все материалы';
     elements.category.replaceChildren(new Option(allTitle, 'all'));
     Object.entries(categories()).forEach(([key, category]) => {
         elements.category.add(new Option(`${category.title} · ${categoryItems(category).length}`, key));
     });
-    const categoryLabel = { functions: 'Категория функций', concepts: 'Категория концепций', frameworks: 'Категория фреймворков' }[state.mode];
+    const categoryLabel = { functions: 'Категория функций', concepts: 'Категория концепций', frameworks: 'Категория фреймворков' }[state.mode] ?? 'Категория материалов';
     elements.category.setAttribute('aria-label', categoryLabel);
-    const itemLabel = { functions: 'функция', concepts: 'концепция', frameworks: 'карточка фреймворка' }[state.mode];
+    const itemLabel = { functions: 'функция', concepts: 'концепция', frameworks: 'карточка фреймворка' }[state.mode] ?? 'карточка материала';
     elements.previous.setAttribute('aria-label', `Предыдущая ${itemLabel}`);
     elements.next.setAttribute('aria-label', `Следующая случайная ${itemLabel}`);
 }
 
 export function showRandomItem() {
     const pool = currentPool(elements.category.value);
-    if (!pool.length) return;
+    if (!pool.length) {
+        renderEmptyCatalog();
+        return;
+    }
     const available = state.mode === 'functions' && state.withoutRepeats
         ? pool.filter((slug) => !state.shownFunctions.has(slug))
         : pool;
@@ -156,6 +159,7 @@ export function setMode(nextMode) {
     elements.functionsMode.classList.toggle('active', state.mode === 'functions');
     elements.conceptsMode.classList.toggle('active', state.mode === 'concepts');
     elements.frameworksMode.classList.toggle('active', state.mode === 'frameworks');
+    elements.materialTypeModes.forEach((button) => button.classList.toggle('active', state.mode === materialMode(button.dataset.materialType)));
     elements.tasksMode.classList.toggle('active', state.mode === 'tasks');
     elements.sandboxMode.classList.toggle('active', state.mode === 'sandbox');
     const isSandbox = state.mode === 'sandbox';
@@ -219,4 +223,24 @@ export function initialiseView() {
 function showError(error) {
     elements.error.textContent = error.message;
     elements.error.classList.remove('hidden');
+}
+
+function renderEmptyCatalog() {
+    elements.cycleComplete.classList.add('hidden');
+    elements.studyContent.classList.remove('hidden');
+    elements.quizMode.classList.add('hidden');
+    elements.itemName.classList.remove('hidden');
+    elements.itemName.textContent = state.materialTypeTitles[state.mode] ?? 'Материалы';
+    elements.categoryLabel.textContent = 'Раздел пока пуст';
+    elements.prompt.textContent = 'Для этого типа пока нет материалов.';
+    elements.progress.textContent = '0 материалов в подборке';
+    elements.previous.disabled = true;
+    elements.reveal.classList.add('hidden');
+    elements.known.classList.add('hidden');
+    elements.showFull.classList.add('hidden');
+    elements.loading.classList.add('hidden');
+    elements.error.classList.add('hidden');
+    elements.answer.classList.add('hidden');
+    elements.manual.classList.add('hidden');
+    elements.source.classList.add('hidden');
 }

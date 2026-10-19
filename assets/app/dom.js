@@ -3,6 +3,7 @@ export const elements = {
     functionsMode: document.querySelector('#functions-mode'),
     conceptsMode: document.querySelector('#concepts-mode'),
     frameworksMode: document.querySelector('#frameworks-mode'),
+    materialTypeModes: [...document.querySelectorAll('[data-material-type]')],
     tasksMode: document.querySelector('#tasks-mode'),
     sandboxMode: document.querySelector('#sandbox-mode'),
     stage: document.querySelector('#stage'),

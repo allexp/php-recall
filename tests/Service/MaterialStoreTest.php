@@ -146,4 +146,22 @@ final class MaterialStoreTest extends TestCase
         self::assertSame(['laravel'], array_keys($store->frameworkCatalog()));
         self::assertSame('service-container', $store->frameworkCatalog()['laravel']['materials'][0]['slug']);
     }
+
+    public function testReturnsAddedMaterialTypesAndTheirCatalogs(): void
+    {
+        $store = new MaterialStore($this->database);
+        $store->saveMaterial('article', 'Статьи', 'architecture', 'Архитектура', [
+            'title' => 'Гексагональная архитектура',
+            'slug' => 'hexagonal-architecture',
+            'definition' => 'Архитектурный подход.',
+            'short_description' => 'Изолирует бизнес-логику.',
+            'full_description' => '<p>Полное описание.</p>',
+        ]);
+
+        self::assertSame([['code' => 'article', 'title' => 'Статьи']], $store->materialTypes());
+        self::assertSame(
+            'hexagonal-architecture',
+            $store->materialCatalog('article')['architecture']['materials'][0]['slug'],
+        );
+    }
 }

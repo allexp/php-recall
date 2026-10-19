@@ -19,6 +19,9 @@
             <button class="switch-button active" id="functions-mode" type="button">Функции</button>
             <button class="switch-button" id="concepts-mode" type="button">Концепции</button>
             <button class="switch-button" id="frameworks-mode" type="button">Фреймворки</button>
+            {% for material_type in material_types|filter(material_type => material_type.code not in ['function', 'concept', 'framework']) %}
+                <button class="switch-button material-type-mode" type="button" data-material-type="{{ material_type.code }}">{{ material_type.title }}</button>
+            {% endfor %}
             <button class="switch-button" id="tasks-mode" type="button">Задачи</button>
             <button class="switch-button" id="sandbox-mode" type="button">Песочница</button>
         </nav>
