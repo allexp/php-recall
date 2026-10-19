@@ -15,6 +15,8 @@ services:
     environment:
       SANDBOX_RUNNER_URL: http://sandbox-runner:8080
       SANDBOX_TOKEN: ${SANDBOX_TOKEN:?SANDBOX_TOKEN must be set}
+      SYMFONY_TRUSTED_PROXIES: REMOTE_ADDR
+      SYMFONY_TRUSTED_HEADERS: x-forwarded-proto
     depends_on:
       database:
         condition: service_healthy
