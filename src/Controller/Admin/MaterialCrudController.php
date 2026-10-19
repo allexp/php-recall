@@ -70,7 +70,7 @@ final class MaterialCrudController extends AbstractCrudController
             ->setTargetFieldName('title')
             ->setUnlockConfirmationMessage('Изменение slug может нарушить существующие ссылки. Продолжить?')
             ->setColumns(4);
-        yield TextEditorField::new('definition', 'Определение')
+        yield TextareaField::new('definition', 'Определение')
             ->setNumOfRows(8)
             ->hideOnIndex();
         yield TextareaField::new('shortDescription', 'Краткое описание')

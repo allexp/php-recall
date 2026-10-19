@@ -44,6 +44,14 @@ final class AdminCrudControllerTest extends WebTestCase
         $type = $this->repository(MaterialType::class)->findOneBy(['code' => 'guide']);
         self::assertInstanceOf(MaterialType::class, $type);
 
+        $crawler = $client->request('GET', '/admin/category/new');
+        $typeOption = $crawler->filter(sprintf(
+            'select[name="Category[type]"] option[value="%d"]',
+            $type->getId(),
+        ));
+        self::assertCount(1, $typeOption);
+        self::assertSame('Руководства', trim($typeOption->text()));
+
         $crawler = $client->request('GET', '/admin/material-type/new');
         $form = $crawler->filter('form[name="MaterialType"]')->form();
         $form->setValues([

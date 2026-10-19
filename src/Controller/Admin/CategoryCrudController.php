@@ -35,7 +35,6 @@ final class CategoryCrudController extends AbstractCrudController
         yield AssociationField::new('type', 'Тип')
             ->setCrudController(MaterialTypeCrudController::class)
             ->setSortProperty('title')
-            ->autocomplete()
             ->setColumns(6);
         yield TextField::new('title', 'Название')->setColumns(8);
         yield TextField::new('code', 'Код')
