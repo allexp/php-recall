@@ -84,8 +84,10 @@ docker compose -f compose.production.yaml up --build -d
 владеющую `/var/run/docker.sock` на сервере (её можно узнать через `stat -c '%g' /var/run/docker.sock`).
 Пароль в `DATABASE_URL` должен совпадать с `POSTGRES_PASSWORD` и быть URL-кодирован.
 
-В production приложение доступно по адресу <https://php-recall.aleksppv.ru>. Центральный Nginx
-должен находиться в сети `scheduler_backend` и проксировать запросы на `php-recall:8080`.
+В production приложение доступно по адресу <https://php-recall.aleksppv.ru>. Контейнер Nginx
+`php-recall` принимает HTTP-запросы на порту `8080` и передаёт динамические запросы отдельному
+сервису PHP-FPM `app`. Центральный Nginx должен находиться в сети `scheduler_backend` и
+проксировать запросы на `php-recall:8080`.
 Скрипты из `ops/certbot` используются сервером для автоматического продления TLS-сертификата.
 
 ### Обновление сервера

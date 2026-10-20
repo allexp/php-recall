@@ -4,24 +4,33 @@ WORKDIR /app
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader --no-scripts --ignore-platform-req=ext-pdo_pgsql
 
-FROM php:8.3-cli-alpine
+FROM php:8.3-fpm-alpine AS php
 
-RUN apk add --no-cache ca-certificates libpq-dev libxml2-dev sqlite-dev \
-    && docker-php-ext-install dom pdo_pgsql pdo_sqlite
+RUN apk add --no-cache ca-certificates libpq-dev \
+    && docker-php-ext-install pdo_pgsql
 
 WORKDIR /app
 COPY . /app
 COPY --from=dependencies /app/vendor /app/vendor
+COPY ops/php/opcache.ini /usr/local/etc/php/conf.d/opcache.ini
 
 RUN APP_ENV=prod APP_DEBUG=0 php bin/console assets:install public --no-interaction
 
 RUN mkdir -p /app/var/cache /app/var/log /app/data \
     && chown -R www-data:www-data /app/var /app/data
 
-USER www-data
-EXPOSE 8080
-
 ENV APP_ENV=prod
 ENV APP_DEBUG=0
 
-CMD ["php", "-S", "0.0.0.0:8080", "-t", "public", "public/router.php"]
+EXPOSE 9000
+
+CMD ["php-fpm"]
+
+FROM nginx:1.27-alpine AS nginx
+
+COPY ops/nginx/default.conf /etc/nginx/conf.d/default.conf
+COPY --from=php /app/public /app/public
+
+EXPOSE 8080
+
+CMD ["nginx", "-g", "daemon off;"]

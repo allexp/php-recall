@@ -1,14 +1,15 @@
 services:
   app:
-    build: .
-    container_name: php-recall
+    build:
+      context: .
+      target: php
     restart: unless-stopped
     env_file:
       - .env.production
     volumes:
       - php-recall-data:/app/data
     networks:
-      - scheduler_backend
+      - app_internal
       - sandbox_internal
       - database_internal
     mem_limit: 192m
@@ -21,6 +22,20 @@ services:
       database:
         condition: service_healthy
       sandbox-runner:
+        condition: service_started
+
+  web:
+    build:
+      context: .
+      target: nginx
+    container_name: php-recall
+    restart: unless-stopped
+    networks:
+      - scheduler_backend
+      - app_internal
+    mem_limit: 32m
+    depends_on:
+      app:
         condition: service_started
 
   database:
@@ -62,6 +77,8 @@ services:
 networks:
   scheduler_backend:
     external: true
+  app_internal:
+    internal: true
   sandbox_internal:
     internal: true
   database_internal:

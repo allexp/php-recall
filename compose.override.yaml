@@ -16,7 +16,15 @@ services:
       - ./public/admin-material-category-filter.js:/app/public/admin-material-category-filter.js
       - ./public/favicon.png:/app/public/favicon.png
       - ./public/index.php:/app/public/index.php
-      - ./public/router.php:/app/public/router.php
       - ./public/sandbox-editor.js:/app/public/sandbox-editor.js
       - ./src:/app/src
       - ./templates:/app/templates
+      - ./ops/php/opcache-development.ini:/usr/local/etc/php/conf.d/zz-opcache-development.ini:ro
+
+  web:
+    volumes:
+      - ./public/app.css:/app/public/app.css:ro
+      - ./public/app.js:/app/public/app.js:ro
+      - ./public/admin-material-category-filter.js:/app/public/admin-material-category-filter.js:ro
+      - ./public/favicon.png:/app/public/favicon.png:ro
+      - ./public/sandbox-editor.js:/app/public/sandbox-editor.js:ro

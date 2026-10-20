@@ -62,14 +62,16 @@ echo "Проверяю состояние сервиса..."
 ATTEMPT=1
 MAX_ATTEMPTS=15
 while [ "$ATTEMPT" -le "$MAX_ATTEMPTS" ]; do
-    if docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" ps --status running --services | grep -Fxq app; then
+    RUNNING_SERVICES=$(docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" ps --status running --services)
+    if printf '%s\n' "$RUNNING_SERVICES" | grep -Fxq app \
+        && printf '%s\n' "$RUNNING_SERVICES" | grep -Fxq web; then
         break
     fi
 
     if [ "$ATTEMPT" -eq "$MAX_ATTEMPTS" ]; then
-        echo "Ошибка: сервис app не перешёл в состояние running." >&2
+        echo "Ошибка: сервисы app и web не перешли в состояние running." >&2
         docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" ps >&2
-        docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" logs --tail 100 app >&2
+        docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" logs --tail 100 app web >&2
         exit 1
     fi
 
