@@ -9,9 +9,11 @@ services:
     volumes:
       - php-recall-data:/app/data
     networks:
-      - app_internal
-      - sandbox_internal
-      - database_internal
+      app_internal:
+        aliases:
+          - php-recall-fpm
+      sandbox_internal:
+      database_internal:
     mem_limit: 192m
     environment:
       SANDBOX_RUNNER_URL: http://sandbox-runner:8080

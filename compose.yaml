@@ -6,6 +6,10 @@ services:
     volumes:
       - user-data:/app/data
     restart: unless-stopped
+    networks:
+      default:
+        aliases:
+          - php-recall-fpm
     environment:
       DATABASE_URL: postgresql://php_recall:${POSTGRES_PASSWORD:-php_recall}@database:5432/php_recall?serverVersion=16&charset=utf8
       SANDBOX_RUNNER_URL: http://sandbox-runner:8080
@@ -58,3 +62,6 @@ services:
 volumes:
   user-data:
   postgres-data:
+
+networks:
+  default:
