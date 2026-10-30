@@ -37,6 +37,7 @@ final class AdminCrudControllerTest extends WebTestCase
         $entityManager->flush();
         $client->loginUser($admin, 'admin');
 
+        $this->assertCodeIsGeneratedFromTitle($client, '/admin/material-type/new', 'MaterialType');
         $this->submitForm($client, '/admin/material-type/new', 'MaterialType', [
             'title' => 'Руководства',
             'code' => 'guide',
@@ -63,6 +64,7 @@ final class AdminCrudControllerTest extends WebTestCase
         self::assertSelectorTextContains('.invalid-feedback', 'Тип материала с таким кодом уже существует.');
         self::assertCount(1, $this->repository(MaterialType::class)->findBy(['code' => 'guide']));
 
+        $this->assertCodeIsGeneratedFromTitle($client, '/admin/category/new', 'Category');
         $this->submitForm($client, '/admin/category/new', 'Category', [
             'type' => (string) $type->getId(),
             'title' => 'Тестирование',
@@ -171,6 +173,18 @@ final class AdminCrudControllerTest extends WebTestCase
         self::assertNull($this->repository(Material::class)->find($materialId));
         self::assertNull($this->repository(MaterialSection::class)->find($section->getId()));
         self::assertNull($this->repository(CodeExample::class)->find($example->getId()));
+    }
+
+    private function assertCodeIsGeneratedFromTitle(KernelBrowser $client, string $path, string $formName): void
+    {
+        $crawler = $client->request('GET', $path);
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('script[src*="field-slug"]');
+        self::assertSame(
+            json_encode([sprintf('%s_title', $formName)], JSON_THROW_ON_ERROR),
+            $crawler->filter(sprintf('[name="%s[code]"]', $formName))->attr('data-target'),
+        );
     }
 
     /** @param array<string, string> $values */

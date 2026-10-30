@@ -10,6 +10,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IdField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IntegerField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\SlugField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 
 /** Настраивает управление категориями материалов. */
@@ -37,7 +38,9 @@ final class CategoryCrudController extends AbstractCrudController
             ->setSortProperty('title')
             ->setColumns(6);
         yield TextField::new('title', 'Название')->setColumns(8);
-        yield TextField::new('code', 'Код')
+        yield SlugField::new('code', 'Код')
+            ->setTargetFieldName('title')
+            ->setUnlockConfirmationMessage('Изменение кода может нарушить существующие связи. Продолжить?')
             ->setHelp('Строчные латинские буквы, цифры и дефисы.')
             ->setColumns(4);
         yield IntegerField::new('position', 'Позиция')->setColumns(2);

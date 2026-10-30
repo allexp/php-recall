@@ -40,6 +40,7 @@ final class DashboardController extends AbstractDashboardController
         yield MenuItem::linkTo(MaterialSectionCrudController::class, 'Разделы материалов', 'fa fa-list');
         yield MenuItem::linkTo(CodeExampleCrudController::class, 'Примеры кода', 'fa fa-code');
         yield MenuItem::section();
+        yield MenuItem::linkToRoute('Сменить пароль', 'fa fa-key', 'admin_change_password');
         yield MenuItem::linkToRoute('Перейти на сайт', 'fa fa-arrow-up-right-from-square', 'app_home');
         yield MenuItem::linkToLogout('Выйти', 'fa fa-right-from-bracket');
     }

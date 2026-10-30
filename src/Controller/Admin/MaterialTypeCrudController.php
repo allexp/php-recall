@@ -8,6 +8,7 @@ use App\Entity\MaterialType;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IdField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\SlugField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 
 /** Настраивает управление системными типами материалов. */
@@ -31,7 +32,9 @@ final class MaterialTypeCrudController extends AbstractCrudController
     {
         yield IdField::new('id', 'ID')->hideOnForm();
         yield TextField::new('title', 'Название')->setColumns(8);
-        yield TextField::new('code', 'Код')
+        yield SlugField::new('code', 'Код')
+            ->setTargetFieldName('title')
+            ->setUnlockConfirmationMessage('Изменение кода может нарушить существующие связи. Продолжить?')
             ->setHelp('Строчные латинские буквы, цифры и дефисы.')
             ->setColumns(4);
     }

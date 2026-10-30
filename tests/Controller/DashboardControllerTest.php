@@ -48,6 +48,7 @@ final class DashboardControllerTest extends WebTestCase
             self::assertSelectorTextContains('.logo', 'PHP Recall');
             self::assertSelectorTextContains('.ea-sidebar', 'Главная');
             self::assertSelectorTextContains('.ea-sidebar', 'Управление материалами');
+            self::assertSelectorTextContains('.ea-sidebar', 'Сменить пароль');
             self::assertSelectorTextContains('.ea-sidebar', 'Перейти на сайт');
             self::assertSelectorTextContains('.ea-sidebar', 'Выйти');
 
@@ -56,6 +57,11 @@ final class DashboardControllerTest extends WebTestCase
                 $client->click($link);
                 self::assertResponseIsSuccessful();
             }
+
+            $client->click($crawler->selectLink('Сменить пароль')->link());
+            self::assertResponseIsSuccessful();
+            self::assertRouteSame('admin_change_password');
+            self::assertSelectorExists('form input[name="current_password"]');
 
             foreach ([
                 '/admin/material/new',
