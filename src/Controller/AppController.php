@@ -106,6 +106,7 @@ final class AppController extends AbstractController
             'definition' => $material['definition'],
             'short_description' => $material['short_description'],
             'full_description' => $material['full_description'],
+            'content_format' => $material['content_format'],
             'source_url' => $material['source_url'],
             'code_examples' => $material['code_examples'],
             'sections' => $material['sections'],

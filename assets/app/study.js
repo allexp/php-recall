@@ -1,5 +1,7 @@
 import { loadDocumentation, setKnowledge } from './api.js';
+import { highlightCodeBlocks } from './code-highlight.js';
 import { elements } from './dom.js';
+import { renderMarkdown } from './markdown.js';
 import { renderCycleComplete, renderItem, renderMaterialFull, updateCycleProgress } from './render.js';
 import { incrementCounter, updateStatistics } from './statistics.js';
 import { categories, categoryItems, counters, currentPool, materialMode, resetHistory, state } from './state.js';
@@ -113,8 +115,9 @@ export async function reveal() {
             const definition = document.createElement('strong');
             const description = document.createElement('p');
             if (isQuestion) {
-                description.textContent = data.full_description;
-                elements.answer.replaceChildren(description);
+                // Старые базы помечали ответы как text, хотя они уже содержали Markdown.
+                renderMarkdown(elements.answer, data.full_description);
+                highlightCodeBlocks(elements.answer);
             } else {
                 definition.textContent = data.definition;
                 description.textContent = data.short_description;
