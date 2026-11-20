@@ -98,6 +98,7 @@ export async function reveal() {
     try {
         const data = await loadDocumentation(slug, requestedMode);
         if (state.history[state.historyIndex] !== slug || state.mode !== requestedMode) return;
+        const isQuestion = requestedMode === materialMode('question');
         if (state.mode === 'functions') {
             if (state.quizMode === 'definition') {
                 const name = document.createElement('strong');
@@ -111,16 +112,21 @@ export async function reveal() {
         } else {
             const definition = document.createElement('strong');
             const description = document.createElement('p');
-            definition.textContent = data.definition;
-            description.textContent = data.short_description;
-            elements.answer.replaceChildren(definition, description);
+            if (isQuestion) {
+                description.textContent = data.full_description;
+                elements.answer.replaceChildren(description);
+            } else {
+                definition.textContent = data.definition;
+                description.textContent = data.short_description;
+                elements.answer.replaceChildren(definition, description);
+            }
             if (data.source_url) {
                 elements.source.href = data.source_url;
                 elements.source.textContent = 'Открыть источник ↗';
             }
         }
         elements.answer.classList.remove('hidden');
-        elements.showFull.classList.remove('hidden');
+        elements.showFull.classList.toggle('hidden', isQuestion);
         elements.source.classList.toggle('hidden', !(data.source || data.source_url));
     } catch (error) {
         showError(error);
