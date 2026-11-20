@@ -1,4 +1,15 @@
 services:
+  styles:
+    image: node:22-alpine
+    working_dir: /app
+    command: sh -c "npm ci && npm run watch:css -- --poll"
+    init: true
+    volumes:
+      - ./package.json:/app/package.json:ro
+      - ./package-lock.json:/app/package-lock.json:ro
+      - ./assets/styles:/app/assets/styles:ro
+      - ./public/app.css:/app/public/app.css
+
   database:
     ports:
       - "5433:5432"

@@ -2,7 +2,10 @@
   "name": "php-recall-frontend",
   "private": true,
   "scripts": {
-    "build": "esbuild assets/app/main.js --bundle --minify --outfile=public/app.js && esbuild assets/sandbox-editor.js --bundle --minify --outfile=public/sandbox-editor.js"
+    "build": "npm run build:css && npm run build:js",
+    "build:css": "sass assets/styles/app.scss public/app.css --style=expanded --no-source-map",
+    "build:js": "esbuild assets/app/main.js --bundle --minify --outfile=public/app.js && esbuild assets/sandbox-editor.js --bundle --minify --outfile=public/sandbox-editor.js",
+    "watch:css": "sass assets/styles/app.scss public/app.css --style=expanded --no-source-map --watch"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.18.6",
@@ -14,6 +17,7 @@
     "highlight.js": "^11.12.0"
   },
   "devDependencies": {
-    "esbuild": "^0.25.0"
+    "esbuild": "^0.25.0",
+    "sass": "^1.108.2"
   }
 }
