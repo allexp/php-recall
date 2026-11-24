@@ -6,12 +6,14 @@ namespace App\Controller\Admin;
 
 use App\Entity\Category;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IdField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IntegerField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\SlugField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
+use EasyCorp\Bundle\EasyAdminBundle\Filter\EntityFilter;
 
 /** Настраивает управление категориями материалов. */
 final class CategoryCrudController extends AbstractCrudController
@@ -28,6 +30,12 @@ final class CategoryCrudController extends AbstractCrudController
             ->setEntityLabelInPlural('Категории')
             ->setSearchFields(['title', 'code', 'type.title'])
             ->setDefaultSort(['position' => 'ASC', 'title' => 'ASC']);
+    }
+
+    public function configureFilters(Filters $filters): Filters
+    {
+        return $filters
+            ->add(EntityFilter::new('type', 'Тип')->autocomplete());
     }
 
     public function configureFields(string $pageName): iterable
