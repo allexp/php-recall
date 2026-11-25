@@ -6,7 +6,7 @@ namespace App\Controller\Admin;
 
 use App\Entity\Category;
 use App\Entity\Material;
-use EasyCorp\Bundle\EasyAdminBundle\Config\Asset;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Assets;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
@@ -39,11 +39,26 @@ final class MaterialCrudController extends AbstractCrudController
             ->setPaginatorPageSize(30);
     }
 
+    public function configureAssets(Assets $assets): Assets
+    {
+        return $assets->addJsFile('admin-material-category-filter.js');
+    }
+
     public function configureFilters(Filters $filters): Filters
     {
         return $filters
-            ->add(EntityFilter::new('type', 'Тип')->autocomplete())
-            ->add(EntityFilter::new('category', 'Категория')->autocomplete());
+            ->add(
+                EntityFilter::new('type', 'Тип')
+                    ->autocomplete()
+                    ->setFormTypeOption('value_type_options.attr.data-material-type-source', 'true'),
+            )
+            ->add(
+                EntityFilter::new('category', 'Категория')
+                    ->setFormTypeOption('value_type_options.choice_attr', static fn (Category $category): array => [
+                        'data-material-type-id' => (string) $category->getType()?->getId(),
+                    ])
+                    ->setFormTypeOption('value_type_options.attr.data-material-category-target', 'true'),
+            );
     }
 
     public function configureFields(string $pageName): iterable
@@ -63,7 +78,6 @@ final class MaterialCrudController extends AbstractCrudController
             ])
             ->setFormTypeOption('attr.data-material-category-target', 'true')
             ->setRequired(false)
-            ->addJsFiles(Asset::new('admin-material-category-filter.js')->onlyOnForms())
             ->setColumns(6);
         yield TextField::new('title', 'Название')->setColumns(8);
         yield SlugField::new('slug', 'Slug')

@@ -145,6 +145,29 @@ final class AdminCrudControllerTest extends WebTestCase
             (string) $otherType->getId(),
             $crawler->filter(sprintf('select[name="Material[category]"] option[value="%d"]', $otherCategory->getId()))->attr('data-material-type-id'),
         );
+
+        $indexCrawler = $client->request('GET', '/admin/material');
+        self::assertSelectorExists('script[src$="/admin-material-category-filter.js"]');
+        $filtersUrl = $indexCrawler->filter('.action-filters-button')->attr('data-href');
+        self::assertNotNull($filtersUrl);
+        $filtersCrawler = $client->request('GET', $filtersUrl);
+        self::assertSelectorExists('[data-filter-property="type"] [data-material-type-source]');
+        self::assertSelectorExists('[data-filter-property="category"] [data-material-category-target]');
+        self::assertSame(
+            (string) $type->getId(),
+            $filtersCrawler->filter(sprintf(
+                '[data-filter-property="category"] option[value="%d"]',
+                $category->getId(),
+            ))->attr('data-material-type-id'),
+        );
+        self::assertSame(
+            (string) $otherType->getId(),
+            $filtersCrawler->filter(sprintf(
+                '[data-filter-property="category"] option[value="%d"]',
+                $otherCategory->getId(),
+            ))->attr('data-material-type-id'),
+        );
+
         $form['Material[type][autocomplete]']->disableValidation()->select((string) $type->getId());
         $form['Material[category]']->disableValidation()->select((string) $otherCategory->getId());
         $form->setValues([

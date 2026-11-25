@@ -25,5 +25,18 @@ final class MaterialCrudControllerConfigurationTest extends TestCase
         self::assertContainsOnlyInstancesOf(EntityFilter::class, $filters);
         self::assertSame('Тип', $filters['type']->getAsDto()->getLabel());
         self::assertSame('Категория', $filters['category']->getAsDto()->getLabel());
+        self::assertTrue($filters['type']->getAsDto()->getFormTypeOption('autocomplete'));
+        self::assertSame(
+            'true',
+            $filters['type']->getAsDto()->getFormTypeOption('value_type_options.attr.data-material-type-source'),
+        );
+        self::assertNotTrue($filters['category']->getAsDto()->getFormTypeOption('autocomplete'));
+        self::assertSame(
+            'true',
+            $filters['category']->getAsDto()->getFormTypeOption('value_type_options.attr.data-material-category-target'),
+        );
+        self::assertIsCallable(
+            $filters['category']->getAsDto()->getFormTypeOption('value_type_options.choice_attr'),
+        );
     }
 }
